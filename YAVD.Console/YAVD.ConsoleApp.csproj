@@ -56,10 +56,16 @@
     <ManifestKeyFile>YAVD.ConsoleApp_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateManifests>true</GenerateManifests>
+    <GenerateManifests>false</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
     <SignManifests>true</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetZone>LocalIntranet</TargetZone>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -77,6 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Properties\app.manifest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\YAVD.Core\YAVD.Core.csproj">
@@ -92,4 +99,11 @@
     </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>IF NOT EXIST "$(TargetDir)x86" mkdir "$(TargetDir)x86"
+xcopy "$(SolutionDir)YAVD.Core\bin\Debug\x86\*" "$(TargetDir)x86" /E /Y
+
+IF NOT EXIST "$(TargetDir)x64" mkdir "$(TargetDir)x64"
+xcopy "$(SolutionDir)YAVD.Core\bin\Debug\x64\*" "$(TargetDir)x64" /E /Y</PostBuildEvent>
+  </PropertyGroup>
 </Project>
