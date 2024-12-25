@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YAVD.Core
+namespace YAVD.Core.Models
 {
     public class MainSettingsModel
     {
@@ -13,10 +13,6 @@ namespace YAVD.Core
         {
             get { return _YouTubeApiKey; }
             set { _YouTubeApiKey = value; }
-        }
-        public MainSettingsModel()
-        {
-            _YouTubeApiKey = "";
         }
     }
 }

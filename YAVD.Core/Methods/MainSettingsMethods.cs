@@ -6,8 +6,10 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using YAVD.Core.Helpers;
+using YAVD.Core.Models;
 
-namespace YAVD.Core
+namespace YAVD.Core.Methods
 {
     public class MainSettingsMethods
     {
