@@ -15,7 +15,7 @@ namespace YAVD.Core.Methods
     {
         public static MainSettingsModel LoadSettings()
         {
-            using (IDbConnection cnn = new SQLiteConnection(ConnectionHelpers.GetSQLiteConnectionString()))
+            using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
             {
                 var mainSettings = cnn.QuerySingle<MainSettingsModel>("Select * From MainSettings", new DynamicParameters());
                 return mainSettings;

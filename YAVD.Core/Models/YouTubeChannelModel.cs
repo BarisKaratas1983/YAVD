@@ -8,29 +8,31 @@ namespace YAVD.Core.Models
 {
     public class YouTubeChannelModel
     {
-        private string _Id;
-        private string _Title;
-        private string _Description;
-        private DateTime _LastVideoDate;
+        public string Id_;
+        public string Title_;
+        public string Description_;
+        public DateTime? LastVideoDate_;
+        
         public string Id
         {
-            get { return _Id; }
-            set { _Id = value; }
+            get { return Id_; }
+            set { Id_ = value; }
         }
         public string Title
         {
-            get { return _Title; }
-            set { _Title = value; }
+            get { return Title_; }
+            set { Title_ = value; }
         }
         public string Description
         {
-            get { return _Description; }
-            set { _Description = value; }
+            get { return Description_; }
+            set { Description_ = value; }
         }
-        public DateTime LastVideoDate
+        public DateTime? LastVideoDate
         {
-            get { return _LastVideoDate; }
-            set { _LastVideoDate = value; }
+            get { return LastVideoDate_; }
+            set { LastVideoDate_ = value; }
         }
+        
     }
 }

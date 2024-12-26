@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace YAVD.Core.Helpers
 {
-    public class ConnectionHelpers
+    public class ConnectionHelper
     {
         public static string GetSQLiteConnectionString()
         {
