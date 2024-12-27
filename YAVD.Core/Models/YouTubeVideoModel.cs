@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace YAVD.Core.Models
 {
-    public class YouTubeChannelModel
+    public class YouTubeVideoModel
     {
         private string Id_;
-        public string Title_;
-        public string Description_;
-        
+        private string Title_;
+        private string Description_;
+        private DateTime? PublishedAt_;
+
         public string Id
         {
             get { return Id_; }
@@ -26,6 +27,11 @@ namespace YAVD.Core.Models
         {
             get { return Description_; }
             set { Description_ = value; }
-        }        
+        }
+        public DateTime? PublishedAt
+        {
+            get { return PublishedAt_; }
+            set { PublishedAt_ = value; }
+        }
     }
 }

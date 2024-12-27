@@ -20,8 +20,7 @@ namespace YAVD.Core.Methods
             {
                 try
                 {
-                    youTubeChannel.LastVideoDate = DateTime.Now;
-                    cnn.Execute("Insert or Replace Into YouTubeChannel(Id, Title, Description, LastVideoDate) Values(@Id, @Title, @Description, @LastVideoDate);", youTubeChannel);
+                    cnn.Execute("Insert or Replace Into YouTubeChannel(Id, Title, Description) Values(@Id, @Title, @Description);", youTubeChannel);
                     result = true;
                 }
                 catch (Exception)

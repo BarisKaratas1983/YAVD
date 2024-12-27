@@ -15,7 +15,9 @@ namespace YAVD.Core.Helpers
         {
             YouTubeChannelModel result = new YouTubeChannelModel();
 
-            if (channelListResponse != null && channelListResponse.Items != null && channelListResponse.Items.Count == 1)
+            if (channelListResponse != null &&
+                channelListResponse.Items != null &&
+                channelListResponse.Items.Count == 1)
             {
                 result.Id = channelListResponse.Items[0].Id;
                 result.Description = channelListResponse.Items[0].Snippet.Description;
@@ -28,7 +30,10 @@ namespace YAVD.Core.Helpers
         {
             YouTubeChannelModel result = new YouTubeChannelModel();
 
-            if (videoListResponse != null && videoListResponse.Items != null && videoListResponse.Items.Count == 1 && videoListResponse.Items[0].Snippet != null)
+            if (videoListResponse != null &&
+                videoListResponse.Items != null &&
+                videoListResponse.Items.Count == 1 &&
+                videoListResponse.Items[0].Snippet != null)
             {
                 result.Id = videoListResponse.Items[0].Snippet.ChannelId;
                 result.Title = videoListResponse.Items[0].Snippet.ChannelTitle;
@@ -36,16 +41,18 @@ namespace YAVD.Core.Helpers
 
             return result;
         }
-        public static YouTubeChannelModel ConvertSearchListResponseToYouTubeChannelModel(SearchListResponse searchListResponse)
+        public static List<YouTubeVideoModel> ConvertSearchListResponseToYouTubeVideoModelList(SearchListResponse searchListResponse)
         {
-            YouTubeChannelModel result = new YouTubeChannelModel();
+            List<YouTubeVideoModel> result = new List<YouTubeVideoModel>();
 
-            if (searchListResponse != null && searchListResponse.Items != null && searchListResponse.Items.Count == 1 && searchListResponse.Items[0].Snippet != null)
+            if (searchListResponse != null &&
+                searchListResponse.Items != null &&
+                searchListResponse.Items.Count > 0)
             {
-                result.Id = searchListResponse.Items[0].Snippet.ChannelId;
-                result.Title = searchListResponse.Items[0].Snippet.ChannelTitle;
-                result.LastVideoDate = searchListResponse.Items[0].Snippet.PublishedAt;
-                
+                foreach (var response in searchListResponse.Items)
+                {
+                    result.Add(new YouTubeVideoModel { Id = response.Id.VideoId, Title = response.Snippet.Title, Description = response.Snippet.Description, PublishedAt = response.Snippet.PublishedAt });
+                }
             }
 
             return result;

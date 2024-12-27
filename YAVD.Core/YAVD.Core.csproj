@@ -80,6 +80,7 @@
     <Compile Include="Methods\YouTubeMethods.cs" />
     <Compile Include="Models\MainSettingsModel.cs" />
     <Compile Include="Models\YouTubeChannelModel.cs" />
+    <Compile Include="Models\YouTubeVideoModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
