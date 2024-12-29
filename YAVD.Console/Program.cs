@@ -13,10 +13,24 @@ namespace YAVD.ConsoleApp
     {
         static void Main(string[] args)
         {
+            //var knl = YouTubeMethods.GetYouTubeChannelFromVideoUrl("https://www.youtube.com/watch?v=T4eMk7uhlhQ");
+            //DatabaseMethods.InsertOrReplaceYouTubeChannel(knl);
 
-            var knl = YouTubeMethods.GetYouTubeChannelFromVideoUrl("https://www.youtube.com/watch?v=KcwYwTP5i00");           
+            var kanallar = DatabaseMethods.GetYouTubeChannels();
 
-            List<YouTubeVideoModel> vid = YouTubeMethods.GetYouTubeVideos(knl.Id, null);
+            foreach (var kanal in kanallar)
+            {
+                Console.WriteLine("Kanal : {0}", kanal.Title);
+                var videolar = DatabaseMethods.GetYouTubeVideos(kanal.Id);
+
+                foreach (var video in videolar)
+                {
+                    Console.WriteLine("Video : {0} (https:" + "//www.youtube.com/watch?v={1})", video.Title, video.Id);
+                }
+            }
+
+            //var knl = YouTubeMethods.GetYouTubeChannelFromVideoUrl("https://www.youtube.com/watch?v=KcwYwTP5i00");           
+            //DatabaseMethods.InsertOrReplaceYouTubeChannel(knl);
 
             Console.WriteLine("Bitti");
             Console.ReadLine();

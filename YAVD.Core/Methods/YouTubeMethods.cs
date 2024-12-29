@@ -52,7 +52,7 @@ namespace YAVD.Core.Methods
             searchRequest.ChannelId = youTubeChannelId;
             searchRequest.Q = "";
             searchRequest.Type = "video";
-            searchRequest.MaxResults = mainSettings.MaxResults + 2;
+            searchRequest.MaxResults = 3; // mainSettings.MaxResults;
             searchRequest.Order = SearchResource.ListRequest.OrderEnum.Date;
             searchRequest.PublishedAfter = lastVideoDate;
 

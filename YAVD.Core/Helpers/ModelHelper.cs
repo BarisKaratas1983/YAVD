@@ -51,7 +51,7 @@ namespace YAVD.Core.Helpers
             {
                 foreach (var response in searchListResponse.Items)
                 {
-                    result.Add(new YouTubeVideoModel { Id = response.Id.VideoId, Title = response.Snippet.Title, Description = response.Snippet.Description, PublishedAt = response.Snippet.PublishedAt });
+                    result.Add(new YouTubeVideoModel { Id = response.Id.VideoId, YouTubeChannelId = response.Snippet.ChannelId, Title = response.Snippet.Title, Description = response.Snippet.Description, PublishedAt = response.Snippet.PublishedAt });
                 }
             }
 
