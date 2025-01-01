@@ -31,19 +31,25 @@ namespace YAVD.Core.Methods
 
             return result;
         }
-        public static bool InsertOrReplaceYouTubeVideo(YouTubeVideoModel youTubeVideo)
+        public static bool InsertOrReplaceYouTubeVideo(List<YouTubeVideoModel> youTubeVideos)
         {
             bool result = false;
 
-            using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
+            if (youTubeVideos != null)
             {
-                try
+                using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
                 {
-                    cnn.Execute("Insert or Replace Into YouTubeVideos(Id, YouTubeChannelId, Title, Description, PublishedAt) Values(@Id, @YouTubeChannelId, @Title, @Description, @PublishedAt);", youTubeVideo);
-                    result = true;
-                }
-                catch (Exception)
-                {
+                    foreach (var youTubeVideo in youTubeVideos)
+                    {
+                        try
+                        {
+                            cnn.Execute("Insert or Replace Into YouTubeVideos(Id, YouTubeChannelId, Title, Description, PublishedAt) Values(@Id, @YouTubeChannelId, @Title, @Description, @PublishedAt);", youTubeVideo);
+                            result = true;
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
                 }
             }
 
