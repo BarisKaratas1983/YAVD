@@ -17,7 +17,7 @@ namespace YAVD.ConsoleApp
             DatabaseMethods.InsertOrReplaceYouTubeChannel(knl);
 
             var vid = YouTubeMethods.GetYouTubeVideos(knl.Id, null);
-            DatabaseMethods.InsertOrReplaceYouTubeVideo(vid)
+            DatabaseMethods.InsertOrReplaceYouTubeVideo(vid);
 
             var kanallar = DatabaseMethods.GetYouTubeChannels();
 

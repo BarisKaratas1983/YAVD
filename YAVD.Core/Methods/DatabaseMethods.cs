@@ -33,22 +33,22 @@ namespace YAVD.Core.Methods
         }
         public static bool InsertOrReplaceYouTubeVideo(List<YouTubeVideoModel> youTubeVideos)
         {
-            bool result = false;
+            bool result = true;
 
             if (youTubeVideos != null)
             {
-                using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
+                foreach (var youTubeVideo in youTubeVideos)
                 {
-                    foreach (var youTubeVideo in youTubeVideos)
+                    try
                     {
-                        try
+                        using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
                         {
                             cnn.Execute("Insert or Replace Into YouTubeVideos(Id, YouTubeChannelId, Title, Description, PublishedAt) Values(@Id, @YouTubeChannelId, @Title, @Description, @PublishedAt);", youTubeVideo);
-                            result = true;
                         }
-                        catch (Exception)
-                        {
-                        }
+                    }
+                    catch (Exception)
+                    {
+                        result = false;
                     }
                 }
             }
@@ -76,32 +76,21 @@ namespace YAVD.Core.Methods
         {
             List<YouTubeVideoModel> result = null;
 
-            try
+            using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
             {
-                using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
+                try
                 {
-                    var videos = cnn.Query("SELECT YouTubeVideosId, Id, YouTubeChannelId, Title, Description, PublishedAt FROM YouTubeVideos WHERE YouTubeChannelId = @YouTubeChannelId",
-                                           new { YouTubeChannelId = channelId }).ToList();
+                    result = cnn.Query<YouTubeVideoModel>("SELECT YouTubeVideosId, Id, YouTubeChannelId, Title, Description, PublishedAt FROM YouTubeVideos WHERE YouTubeChannelId = @YouTubeChannelId", new { YouTubeChannelId = channelId }).ToList();
 
-                    // Dönüşüm işlemi: PublishedAt alanını long olarak alıp, DateTime'a çevirme
-                    result = videos.Select(video => new YouTubeVideoModel
-                    {
-                        YouTubeVideosId = video.YouTubeVideosId,
-                        Id = video.Id,
-                        YouTubeChannelId = video.YouTubeChannelId,
-                        Title = video.Title,
-                        Description = video.Description,
-                        PublishedAt = video.PublishedAt.HasValue ? DateTimeOffset.FromUnixTimeSeconds(video.PublishedAt.Value).DateTime : (DateTime?)null
-                    }).ToList();
+                }
+                catch (Exception ex)
+                {
+
+                    Console.WriteLine("Hata: " + ex.Message);
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Hata: " + ex.Message);
-            }
 
-            return result;
+            return result ?? new List<YouTubeVideoModel>();
         }
-
     }
 }
