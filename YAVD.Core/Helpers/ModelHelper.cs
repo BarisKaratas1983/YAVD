@@ -11,39 +11,39 @@ namespace YAVD.Core.Helpers
 {
     public class ModelHelper
     {
-        public static YouTubeChannelModel ConvertChannelListResponseToYouTubeChannelModel(ChannelListResponse channelListResponse)
+        public static ChannelModel ConvertChannelListResponseToChannelModel(ChannelListResponse channelListResponse)
         {
-            YouTubeChannelModel result = new YouTubeChannelModel();
+            ChannelModel result = new ChannelModel();
 
             if (channelListResponse != null &&
                 channelListResponse.Items != null &&
                 channelListResponse.Items.Count == 1)
             {
-                result.Id = channelListResponse.Items[0].Id;
+                result.ChannelId = channelListResponse.Items[0].Id;
                 result.Description = channelListResponse.Items[0].Snippet.Description;
                 result.Title = channelListResponse.Items[0].Snippet.Title;
             }
 
             return result;
         }
-        public static YouTubeChannelModel ConvertVideoListResponseToYouTubeChannelModel(VideoListResponse videoListResponse)
+        public static ChannelModel ConvertVideoListResponseToChannelModel(VideoListResponse videoListResponse)
         {
-            YouTubeChannelModel result = new YouTubeChannelModel();
+            ChannelModel result = new ChannelModel();
 
             if (videoListResponse != null &&
                 videoListResponse.Items != null &&
                 videoListResponse.Items.Count == 1 &&
                 videoListResponse.Items[0].Snippet != null)
             {
-                result.Id = videoListResponse.Items[0].Snippet.ChannelId;
+                result.ChannelId = videoListResponse.Items[0].Snippet.ChannelId;
                 result.Title = videoListResponse.Items[0].Snippet.ChannelTitle;
             }
 
             return result;
         }
-        public static List<YouTubeVideoModel> ConvertSearchListResponseToYouTubeVideoModelList(SearchListResponse searchListResponse)
+        public static List<VideoModel> ConvertSearchListResponseToVideoModelList(SearchListResponse searchListResponse)
         {
-            List<YouTubeVideoModel> result = new List<YouTubeVideoModel>();
+            List<VideoModel> result = new List<VideoModel>();
 
             if (searchListResponse != null &&
                 searchListResponse.Items != null &&
@@ -51,7 +51,14 @@ namespace YAVD.Core.Helpers
             {
                 foreach (var response in searchListResponse.Items)
                 {
-                    result.Add(new YouTubeVideoModel { Id = response.Id.VideoId, YouTubeChannelId = response.Snippet.ChannelId, Title = response.Snippet.Title, Description = response.Snippet.Description, PublishedAt = response.Snippet.PublishedAt });
+                    result.Add(new VideoModel
+                    {
+                        ChannelId = response.Snippet.ChannelId,
+                        YouTubeVideoId = response.Id.VideoId,
+                        Title = response.Snippet.Title,
+                        Description = response.Snippet.Description,
+                        PublishedAt = response.Snippet.PublishedAt ?? DateTime.Now
+                    });
                 }
             }
 

@@ -16,7 +16,7 @@ namespace YAVD.ConsoleApp
             var knl = YouTubeMethods.GetYouTubeChannelFromVideoUrl("https://www.youtube.com/watch?v=T4eMk7uhlhQ");
             DatabaseMethods.InsertOrReplaceYouTubeChannel(knl);
 
-            var vid = YouTubeMethods.GetYouTubeVideos(knl.Id, null);
+            var vid = YouTubeMethods.GetYouTubeVideos(knl.ChannelId, null);
             DatabaseMethods.InsertOrReplaceYouTubeVideo(vid);
 
             var kanallar = DatabaseMethods.GetYouTubeChannels();
@@ -24,11 +24,11 @@ namespace YAVD.ConsoleApp
             foreach (var kanal in kanallar)
             {
                 Console.WriteLine("Kanal : {0}", kanal.Title);
-                var videolar = DatabaseMethods.GetYouTubeVideos(kanal.Id);
+                var videolar = DatabaseMethods.GetYouTubeVideos(kanal.ChannelId);
 
                 foreach (var video in videolar)
                 {
-                    Console.WriteLine("Video : {0} (https:" + "//www.youtube.com/watch?v={1})", video.Title, video.Id);
+                    Console.WriteLine("Video : {0} (https:" + "//www.youtube.com/watch?v={1})", video.Title, video.YouTubeVideoId);
                 }
             }
 

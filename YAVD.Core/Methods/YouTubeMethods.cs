@@ -12,7 +12,7 @@ namespace YAVD.Core.Methods
 {
     public class YouTubeMethods
     {
-        public static YouTubeChannelModel GetYouTubeChannelFromHandle(string handle)
+        public static ChannelModel GetYouTubeChannelFromHandle(string handle)
         {
             if (string.IsNullOrWhiteSpace(handle))
                 return null;
@@ -23,9 +23,9 @@ namespace YAVD.Core.Methods
             channelsRequest.ForHandle = "@" + handle;
 
             var channelListResponse = channelsRequest.Execute();
-            return ModelHelper.ConvertChannelListResponseToYouTubeChannelModel(channelListResponse);
+            return ModelHelper.ConvertChannelListResponseToChannelModel(channelListResponse) ?? null;
         }
-        public static YouTubeChannelModel GetYouTubeChannelFromVideoUrl(string videoUrl)
+        public static ChannelModel GetYouTubeChannelFromVideoUrl(string videoUrl)
         {
             string videoId = YouTubeHelper.GetVideoId(videoUrl);
 
@@ -38,9 +38,9 @@ namespace YAVD.Core.Methods
             videosRequest.Id = videoId;
 
             var videoListResponse = videosRequest.Execute();
-            return ModelHelper.ConvertVideoListResponseToYouTubeChannelModel(videoListResponse);
+            return ModelHelper.ConvertVideoListResponseToChannelModel(videoListResponse) ?? null;
         }
-        public static List<YouTubeVideoModel> GetYouTubeVideos(string youTubeChannelId, DateTime? lastVideoDate)
+        public static List<VideoModel> GetYouTubeVideos(string youTubeChannelId, DateTime? lastVideoDate)
         {
             if (string.IsNullOrWhiteSpace(youTubeChannelId))
                 return null;
@@ -52,12 +52,12 @@ namespace YAVD.Core.Methods
             searchRequest.ChannelId = youTubeChannelId;
             searchRequest.Q = "";
             searchRequest.Type = "video";
-            searchRequest.MaxResults = 3; // mainSettings.MaxResults;
+            searchRequest.MaxResults = mainSettings.MaxResults;
             searchRequest.Order = SearchResource.ListRequest.OrderEnum.Date;
             searchRequest.PublishedAfter = lastVideoDate;
 
             var searchListResponse = searchRequest.Execute();
-            return ModelHelper.ConvertSearchListResponseToYouTubeVideoModelList(searchListResponse);
+            return ModelHelper.ConvertSearchListResponseToVideoModelList(searchListResponse) ?? null;
         }
     }
 }

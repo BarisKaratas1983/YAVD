@@ -15,11 +15,13 @@ namespace YAVD.Core.Methods
     {
         public static MainSettingsModel LoadSettings()
         {
+            MainSettingsModel result = null;
+            
             using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
             {
-                var mainSettings = cnn.QuerySingle<MainSettingsModel>("Select * From MainSettings Where Id = 1", new DynamicParameters());
-                return mainSettings;
+                result = cnn.QuerySingle<MainSettingsModel>("Select * From MainSettings Where MainSettingsId = 1", new DynamicParameters());
             }
+            return result ?? new MainSettingsModel();
         }
     }
 }

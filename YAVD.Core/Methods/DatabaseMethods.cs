@@ -13,28 +13,22 @@ namespace YAVD.Core.Methods
 {
     public class DatabaseMethods
     {
-        public static bool InsertOrReplaceYouTubeChannel(YouTubeChannelModel youTubeChannel)
+        public static void InsertOrReplaceYouTubeChannel(ChannelModel youTubeChannel)
         {
-            bool result = false;
-
             using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
             {
                 try
-                {
-                    cnn.Execute("Insert or Replace Into YouTubeChannels(Id, Title, Description) Values(@Id, @Title, @Description);", youTubeChannel);
-                    result = true;
+                {                   
+                    cnn.Execute("Insert or Replace Into Channels(ChannelId, Title, Description, Active, CreateDateTime, UpdateDateTime) " +
+                                "Values(@ChannelId, @Title, @Description, @Active, @CreateDateTime, @UpdateDateTime);", youTubeChannel);
                 }
                 catch (Exception)
                 {
                 }
             }
-
-            return result;
         }
-        public static bool InsertOrReplaceYouTubeVideo(List<YouTubeVideoModel> youTubeVideos)
+        public static void InsertOrReplaceYouTubeVideo(List<VideoModel> youTubeVideos)
         {
-            bool result = true;
-
             if (youTubeVideos != null)
             {
                 foreach (var youTubeVideo in youTubeVideos)
@@ -43,54 +37,52 @@ namespace YAVD.Core.Methods
                     {
                         using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
                         {
-                            cnn.Execute("Insert or Replace Into YouTubeVideos(Id, YouTubeChannelId, Title, Description, PublishedAt) Values(@Id, @YouTubeChannelId, @Title, @Description, @PublishedAt);", youTubeVideo);
+                            cnn.Execute("Insert or Replace Into Videos(VideosId, ChannelId, YouTubeVideoId, Title, Description, PublishedAt, CreateDateTime, UpdateDateTime) " +
+                                        "Values(@VideosId, @ChannelId, @YouTubeVideoId, @Title, @Description, @PublishedAt, @CreateDateTime, @UpdateDateTime);", youTubeVideo);
                         }
                     }
                     catch (Exception)
                     {
-                        result = false;
                     }
                 }
             }
-
-            return result;
         }
-        public static List<YouTubeChannelModel> GetYouTubeChannels(string channelId = null)
+        public static List<ChannelModel> GetYouTubeChannels(string channelId = null)
         {
-            List<YouTubeChannelModel> result = null;
+            List<ChannelModel> result = null;
 
             try
             {
                 using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
                 {
-                    result = cnn.Query<YouTubeChannelModel>("Select * From YouTubeChannels" + (channelId != null ? " Where Id = @Id" : ""), new { Id = channelId }).ToList();
+                    result = cnn.Query<ChannelModel>("Select * From Channels " + 
+                                                    (channelId != null ? " Where ChannelId = @ChannelId" : ""), new { ChannelId = channelId }).ToList();
                 }
             }
             catch (Exception)
             {
             }
 
-            return result ?? new List<YouTubeChannelModel>();
+            return result ?? new List<ChannelModel>();
         }
-        public static List<YouTubeVideoModel> GetYouTubeVideos(string channelId)
+        public static List<VideoModel> GetYouTubeVideos(string channelId)
         {
-            List<YouTubeVideoModel> result = null;
+            List<VideoModel> result = null;
 
             using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
             {
                 try
                 {
-                    result = cnn.Query<YouTubeVideoModel>("SELECT YouTubeVideosId, Id, YouTubeChannelId, Title, Description, PublishedAt FROM YouTubeVideos WHERE YouTubeChannelId = @YouTubeChannelId", new { YouTubeChannelId = channelId }).ToList();
+                    result = cnn.Query<VideoModel>("SELECT VideosId, ChannelId, YouTubeVideoId, Title, Description, PublishedAt, CreateDateTime, UpdateDateTime FROM Videos " + 
+                                                   "WHERE ChannelId = @ChannelId", new { ChannelId = channelId }).ToList();
 
                 }
-                catch (Exception ex)
-                {
-
-                    Console.WriteLine("Hata: " + ex.Message);
+                catch (Exception)
+                {                    
                 }
             }
 
-            return result ?? new List<YouTubeVideoModel>();
+            return result ?? new List<VideoModel>();
         }
     }
 }

@@ -79,8 +79,8 @@
     <Compile Include="Methods\MainSettingsMethods.cs" />
     <Compile Include="Methods\YouTubeMethods.cs" />
     <Compile Include="Models\MainSettingsModel.cs" />
-    <Compile Include="Models\YouTubeChannelModel.cs" />
-    <Compile Include="Models\YouTubeVideoModel.cs" />
+    <Compile Include="Models\ChannelModel.cs" />
+    <Compile Include="Models\VideoModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
