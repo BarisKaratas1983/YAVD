@@ -12,18 +12,19 @@ namespace YAVD.Core.Methods
 {
     public class YouTubeMethods
     {
-        public static ChannelModel GetYouTubeChannelFromHandle(string handle)
+        public string ApiKey;
+        public static ChannelModel GetYouTubeChannelFromHandle(string handle, ApiKeyModel apiKey)
         {
             if (string.IsNullOrWhiteSpace(handle))
                 return null;
 
-            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(MainSettingsMethods.LoadSettings().YouTubeApiKey);
+            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(apiKey.ApiKey);
 
             var channelsRequest = youTubeService.Channels.List("snippet");
             channelsRequest.ForHandle = "@" + handle;
 
             var channelListResponse = channelsRequest.Execute();
-            return ModelHelper.ConvertChannelListResponseToChannelModel(channelListResponse) ?? null;
+            return null;// ModelHelper.ConvertChannelListResponseToChannelModel(channelListResponse) ?? null;
         }
         public static ChannelModel GetYouTubeChannelFromVideoUrl(string videoUrl)
         {
@@ -32,13 +33,13 @@ namespace YAVD.Core.Methods
             if (string.IsNullOrWhiteSpace(videoUrl))
                 return null;
 
-            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(MainSettingsMethods.LoadSettings().YouTubeApiKey);
+            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(null); //MainSettingsMethods.LoadSettings().YouTubeApiKey);
 
             var videosRequest = youTubeService.Videos.List("snippet");
             videosRequest.Id = videoId;
 
             var videoListResponse = videosRequest.Execute();
-            return ModelHelper.ConvertVideoListResponseToChannelModel(videoListResponse) ?? null;
+            return null;// ModelHelper.ConvertVideoListResponseToChannelModel(videoListResponse) ?? null;
         }
         public static List<VideoModel> GetYouTubeVideos(string youTubeChannelId, DateTime? lastVideoDate)
         {
@@ -46,7 +47,7 @@ namespace YAVD.Core.Methods
                 return null;
 
             MainSettingsModel mainSettings = MainSettingsMethods.LoadSettings();
-            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(mainSettings.YouTubeApiKey);
+            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(null);// mainSettings.YouTubeApiKey);
 
             var searchRequest = youTubeService.Search.List("snippet");
             searchRequest.ChannelId = youTubeChannelId;

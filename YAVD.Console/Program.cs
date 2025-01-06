@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using YAVD.Core.Base;
 using YAVD.Core.Helpers;
 using YAVD.Core.Methods;
 using YAVD.Core.Models;
@@ -13,22 +15,14 @@ namespace YAVD.ConsoleApp
     {
         static void Main(string[] args)
         {
-            var knl = YouTubeMethods.GetYouTubeChannelFromVideoUrl("https://www.youtube.com/watch?v=T4eMk7uhlhQ");
-            DatabaseMethods.InsertOrReplaceYouTubeChannel(knl);
+            YAVDBase yavd = new YAVDBase();
+            yavd.ApiKeys.GetApiKeys();
 
-            var vid = YouTubeMethods.GetYouTubeVideos(knl.ChannelId, null);
-            DatabaseMethods.InsertOrReplaceYouTubeVideo(vid);
-
-            var kanallar = DatabaseMethods.GetYouTubeChannels();
-
-            foreach (var kanal in kanallar)
+            if (yavd.ApiKeys.ApiKeys != null)
             {
-                Console.WriteLine("Kanal : {0}", kanal.Title);
-                var videolar = DatabaseMethods.GetYouTubeVideos(kanal.ChannelId);
-
-                foreach (var video in videolar)
+                foreach (var item in yavd.ApiKeys.ApiKeys)
                 {
-                    Console.WriteLine("Video : {0} (https:" + "//www.youtube.com/watch?v={1})", video.Title, video.YouTubeVideoId);
+                    Console.WriteLine(item.ApiKey);
                 }
             }
 

@@ -5,37 +5,38 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using YAVD.Core.Methods;
 using YAVD.Core.Models;
 
 namespace YAVD.Core.Helpers
 {
     public class ModelHelper
     {
-        public static ChannelModel ConvertChannelListResponseToChannelModel(ChannelListResponse channelListResponse)
+        public static ChannelModel ConvertChannelListResponseToChannelModel(ChannelListResponse channelListResponse, ApiKeyModel apiKey)
         {
-            ChannelModel result = new ChannelModel();
+            ChannelModel result = new ChannelModel(apiKey.ApiKeyId);
 
             if (channelListResponse != null &&
                 channelListResponse.Items != null &&
                 channelListResponse.Items.Count == 1)
             {
-                result.ChannelId = channelListResponse.Items[0].Id;
+                result.YouTubeChannelId = channelListResponse.Items[0].Id;
                 result.Description = channelListResponse.Items[0].Snippet.Description;
                 result.Title = channelListResponse.Items[0].Snippet.Title;
             }
 
             return result;
         }
-        public static ChannelModel ConvertVideoListResponseToChannelModel(VideoListResponse videoListResponse)
+        public static ChannelModel ConvertVideoListResponseToChannelModel(VideoListResponse videoListResponse, ApiKeyModel apiKey)
         {
-            ChannelModel result = new ChannelModel();
+            ChannelModel result = new ChannelModel(apiKey.ApiKeyId);
 
             if (videoListResponse != null &&
                 videoListResponse.Items != null &&
                 videoListResponse.Items.Count == 1 &&
                 videoListResponse.Items[0].Snippet != null)
             {
-                result.ChannelId = videoListResponse.Items[0].Snippet.ChannelId;
+                result.YouTubeChannelId = videoListResponse.Items[0].Snippet.ChannelId;
                 result.Title = videoListResponse.Items[0].Snippet.ChannelTitle;
             }
 
@@ -51,9 +52,10 @@ namespace YAVD.Core.Helpers
             {
                 foreach (var response in searchListResponse.Items)
                 {
+                    
                     result.Add(new VideoModel
                     {
-                        ChannelId = response.Snippet.ChannelId,
+                        ChannelId = DatabaseMethods.GetYouTubeChannels(response.Snippet.ChannelId).First().ChannelId,                       
                         YouTubeVideoId = response.Id.VideoId,
                         Title = response.Snippet.Title,
                         Description = response.Snippet.Description,

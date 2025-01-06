@@ -8,15 +8,18 @@ namespace YAVD.Core.Models
 {
     public class ChannelModel
     {
-        public string ChannelId { get; set; }
+        public int ChannelId { get; set; }
+        public int ApiKeyId { get; set; }
+        public string YouTubeChannelId { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
-        public bool Active { get; set; } = true;
+        public bool Active { get; set; }
         public DateTime CreateDateTime { get; set; }
         public DateTime? UpdateDateTime { get; set; }
-        public ChannelModel()
+
+        public ChannelModel(int apiKeyId)
         {
-            CreateDateTime = DateTime.Now;
+            this.ApiKeyId = apiKeyId;
         }
     }
 }

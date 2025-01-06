@@ -72,6 +72,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Base\ApiKeyBase.cs" />
+    <Compile Include="Base\YAVDBase.cs" />
     <Compile Include="Helpers\ConnectionHelper.cs" />
     <Compile Include="Helpers\ModelHelper.cs" />
     <Compile Include="Helpers\YouTubeHelper.cs" />
@@ -80,6 +82,7 @@
     <Compile Include="Methods\YouTubeMethods.cs" />
     <Compile Include="Models\MainSettingsModel.cs" />
     <Compile Include="Models\ChannelModel.cs" />
+    <Compile Include="Models\ApiKeyModel.cs" />
     <Compile Include="Models\VideoModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

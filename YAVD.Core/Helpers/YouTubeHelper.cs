@@ -17,8 +17,10 @@ namespace YAVD.Core.Helpers
         }
         public static string GetVideoId(string videoUrl)
         {
+            string result = null;
+            
             if (string.IsNullOrWhiteSpace(videoUrl))
-                return null;
+                return result;
 
             try
             {
@@ -32,21 +34,21 @@ namespace YAVD.Core.Helpers
 
                 if (uri.Host.IndexOf("youtu.be", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    return uri.AbsolutePath.Trim('/');
+                    result = uri.AbsolutePath.Trim('/');
                 }
 
                 if (uri.Host.IndexOf("youtube.com", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     var query = HttpUtility.ParseQueryString(uri.Query);
-                    return query["v"];
-                }
-
-                return null;
+                    result = query["v"];
+                }                
             }
             catch (Exception)
             {
-                return null;
+                result = null;
             }
+
+            return result;
         }
     }
 }
