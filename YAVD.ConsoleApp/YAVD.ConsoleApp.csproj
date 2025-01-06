@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{830613E8-C254-41E8-95CB-AB91EE8B5889}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>YAVD.Console</RootNamespace>
-    <AssemblyName>YAVD.Console</AssemblyName>
+    <RootNamespace>YAVD.ConsoleApp</RootNamespace>
+    <AssemblyName>YAVD.ConsoleApp</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

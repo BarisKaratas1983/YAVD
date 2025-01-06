@@ -15,16 +15,16 @@ namespace YAVD.ConsoleApp
     {
         static void Main(string[] args)
         {
-            YAVDBase yavd = new YAVDBase();
-            yavd.ApiKeys.GetApiKeys();
+            //YAVDClass yavd = new YAVDClass();
+            //yavd.ApiKeys.GetApiKeys();
 
-            if (yavd.ApiKeys.ApiKeys != null)
-            {
-                foreach (var item in yavd.ApiKeys.ApiKeys)
-                {
-                    Console.WriteLine(item.ApiKey);
-                }
-            }
+            //if (yavd.ApiKeys.ApiKeys != null)
+            //{
+            //    foreach (var item in yavd.ApiKeys.ApiKeys)
+            //    {
+            //        Console.WriteLine(item.ApiKey);
+            //    }
+            //}
 
             Console.WriteLine("Bitti");
             Console.ReadLine();
