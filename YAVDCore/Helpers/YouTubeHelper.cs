@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace YAVD.Core.Helpers
+namespace YAVDCore.Helpers
 {
     public class YouTubeHelper
     {

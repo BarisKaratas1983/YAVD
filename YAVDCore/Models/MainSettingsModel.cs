@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace YAVD.Core
+namespace YAVDCore.Models
 {
-    public class YAVDApp
+    public class MainSettingsModel
     {
+        public int MaxResults { get; set; }
     }
 }

@@ -6,11 +6,11 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using YAVD.Core.Helpers;
-using YAVD.Core.Models;
+using YAVDCore.Helpers;
+using YAVDCore.Models;
 using Google.Apis.YouTube.v3.Data;
 
-namespace YAVD.Core.Methods
+namespace YAVDCore.Methods
 {
     public class DatabaseMethods
     {
@@ -22,7 +22,7 @@ namespace YAVD.Core.Methods
             {
                 try
                 {
-                    result = cnn.QuerySingleOrDefault("Select MaxResults From MainSettings");
+                    result = cnn.Query<MainSettingsModel>("Select * From MainSettings").First();
                 }
                 catch (Exception)
                 {
@@ -83,7 +83,7 @@ namespace YAVD.Core.Methods
                 }
             }
         }
-        public static List<ChannelModel> GetYouTubeChannels(string channelId = null)
+        public static List<ChannelModel> GetChannels(string channelId = null)
         {
             List<ChannelModel> result = null;
 

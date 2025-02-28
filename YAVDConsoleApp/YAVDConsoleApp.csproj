@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{830613E8-C254-41E8-95CB-AB91EE8B5889}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>YAVD.ConsoleApp</RootNamespace>
-    <AssemblyName>YAVD.ConsoleApp</AssemblyName>
+    <RootNamespace>YAVDConsoleApp</RootNamespace>
+    <AssemblyName>YAVDConsoleApp</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -86,9 +86,9 @@
     <None Include="Properties\app.manifest" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\YAVD.Core\YAVD.Core.csproj">
+    <ProjectReference Include="..\YAVDCore\YAVDCore.csproj">
       <Project>{724c2c7d-8b61-4baa-8790-9925d6a5e32e}</Project>
-      <Name>YAVD.Core</Name>
+      <Name>YAVDCore</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -101,9 +101,9 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>IF NOT EXIST "$(TargetDir)x86" mkdir "$(TargetDir)x86"
-xcopy "$(SolutionDir)YAVD.Core\bin\Debug\x86\*" "$(TargetDir)x86" /E /Y
+xcopy "$(SolutionDir)YAVDCore\bin\Debug\x86\*" "$(TargetDir)x86" /E /Y
 
 IF NOT EXIST "$(TargetDir)x64" mkdir "$(TargetDir)x64"
-xcopy "$(SolutionDir)YAVD.Core\bin\Debug\x64\*" "$(TargetDir)x64" /E /Y</PostBuildEvent>
+xcopy "$(SolutionDir)YAVDCore\bin\Debug\x64\*" "$(TargetDir)x64" /E /Y</PostBuildEvent>
   </PropertyGroup>
 </Project>

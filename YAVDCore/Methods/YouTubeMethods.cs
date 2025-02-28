@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using YAVD.Core.Helpers;
-using YAVD.Core.Models;
+using YAVDCore.Helpers;
+using YAVDCore.Models;
 
-namespace YAVD.Core.Methods
+namespace YAVDCore.Methods
 {
     public class YouTubeMethods
     {

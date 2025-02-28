@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using YAVDCore.Methods;
+using YAVDCore.Models;
 
-namespace YAVD.Core.Models
+namespace YAVDCore.Business
 {
-    public class MainSettingsModel
+    public class ApiKeyBusiness
     {
-        public int MaxResults { get; set; }
+
     }
 }

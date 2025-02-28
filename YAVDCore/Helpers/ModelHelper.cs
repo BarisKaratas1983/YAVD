@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using YAVD.Core.Methods;
-using YAVD.Core.Models;
+using YAVDCore.Methods;
+using YAVDCore.Models;
 
-namespace YAVD.Core.Helpers
+namespace YAVDCore.Helpers
 {
     public class ModelHelper
     {
@@ -55,7 +55,7 @@ namespace YAVD.Core.Helpers
                     
                     result.Add(new VideoModel
                     {
-                        ChannelId = DatabaseMethods.GetYouTubeChannels(response.Snippet.ChannelId).First().ChannelId,                       
+                        ChannelId = DatabaseMethods.GetChannels(response.Snippet.ChannelId).First().ChannelId,                       
                         YouTubeVideoId = response.Id.VideoId,
                         Title = response.Snippet.Title,
                         Description = response.Snippet.Description,

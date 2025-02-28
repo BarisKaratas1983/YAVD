@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAVD.ConsoleApp", "YAVD.ConsoleApp\YAVD.ConsoleApp.csproj", "{830613E8-C254-41E8-95CB-AB91EE8B5889}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAVDConsoleApp", "YAVDConsoleApp\YAVDConsoleApp.csproj", "{830613E8-C254-41E8-95CB-AB91EE8B5889}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAVD.Core", "YAVD.Core\YAVD.Core.csproj", "{724C2C7D-8B61-4BAA-8790-9925D6A5E32E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YAVDCore", "YAVDCore\YAVDCore.csproj", "{724C2C7D-8B61-4BAA-8790-9925D6A5E32E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +24,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E61E1567-E1EB-4B44-8E91-16097695A4D8}
 	EndGlobalSection
 EndGlobal
