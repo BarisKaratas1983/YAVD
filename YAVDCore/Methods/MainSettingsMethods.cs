@@ -19,7 +19,7 @@ namespace YAVDCore.Methods
             
             using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
             {
-                result = cnn.QuerySingle<MainSettingsModel>("Select * From MainSettings Where MainSettingsId = 1", new DynamicParameters());
+                result = cnn.QuerySingle<MainSettingsModel>("Select * From MainSettings Limit 1");
             }
             return result ?? new MainSettingsModel();
         }

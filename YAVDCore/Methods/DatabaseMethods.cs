@@ -49,21 +49,21 @@ namespace YAVDCore.Methods
 
             return result;
         }
-        public static void InsertOrReplaceYouTubeChannel(ChannelModel youTubeChannel)
+        public static void InsertYouTubeChannel(ChannelModel youTubeChannel)
         {
             using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
             {
                 try
                 {
-                    cnn.Execute("Insert or Replace Into Channels(ChannelId, Title, Description, Active, CreateDateTime, UpdateDateTime) " +
-                                "Values(@ChannelId, @Title, @Description, @Active, @CreateDateTime, @UpdateDateTime);", youTubeChannel);
+                    cnn.Execute("Insert Into Channels(ApiKeyId, YouTubeChannelId, Title, Description, Active, CreateDateTime) " +
+                                "Values(@ApiKeyId, @YouTubeChannelId, @Title, @Description, 1, datetime('now', 'localtime'));", youTubeChannel);
                 }
                 catch (Exception)
                 {
                 }
             }
         }
-        public static void InsertOrReplaceYouTubeVideo(List<VideoModel> youTubeVideos)
+        public static void InsertYouTubeVideos(List<VideoModel> youTubeVideos)
         {
             if (youTubeVideos != null)
             {
@@ -73,8 +73,8 @@ namespace YAVDCore.Methods
                     {
                         using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
                         {
-                            cnn.Execute("Insert or Replace Into Videos(VideosId, ChannelId, YouTubeVideoId, Title, Description, PublishedAt, CreateDateTime, UpdateDateTime) " +
-                                        "Values(@VideosId, @ChannelId, @YouTubeVideoId, @Title, @Description, @PublishedAt, @CreateDateTime, @UpdateDateTime);", youTubeVideo);
+                            cnn.Execute("Insert Into Videos(ChannelId, YouTubeVideoId, Title, Description, PublishedAt, CreateDateTime) " +
+                                        "Values(@ChannelId, @YouTubeVideoId, @Title, @Description, @PublishedAt, datetime('now', 'localtime'));", youTubeVideo);
                         }
                     }
                     catch (Exception)
@@ -83,7 +83,7 @@ namespace YAVDCore.Methods
                 }
             }
         }
-        public static List<ChannelModel> GetChannels(string channelId = null)
+        public static List<ChannelModel> GetChannels(string youTubeChannelId = null)
         {
             List<ChannelModel> result = null;
 
@@ -92,7 +92,7 @@ namespace YAVDCore.Methods
                 using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
                 {
                     result = cnn.Query<ChannelModel>("Select * From Channels " +
-                                                    (channelId != null ? " Where ChannelId = @ChannelId" : ""), new { ChannelId = channelId }).ToList();
+                                                    (youTubeChannelId != null ? " Where YouTubeChannelId = @YouTubeChannelId" : ""), new { YouTubeChannelId = youTubeChannelId }).ToList();
                 }
             }
             catch (Exception)

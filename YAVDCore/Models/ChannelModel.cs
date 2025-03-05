@@ -16,10 +16,6 @@ namespace YAVDCore.Models
         public bool Active { get; set; }
         public DateTime CreateDateTime { get; set; }
         public DateTime? UpdateDateTime { get; set; }
-
-        public ChannelModel(int apiKeyId)
-        {
-            this.ApiKeyId = apiKeyId;
-        }
+        public virtual void CheckVideos() { }
     }
 }

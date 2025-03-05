@@ -7,14 +7,15 @@ using System.Text;
 using System.Threading.Tasks;
 using YAVDCore.Methods;
 using YAVDCore.Models;
+using YAVDCore.Property;
 
 namespace YAVDCore.Helpers
 {
     public class ModelHelper
     {
-        public static ChannelModel ConvertChannelListResponseToChannelModel(ChannelListResponse channelListResponse, ApiKeyModel apiKey)
+        public static ChannelModel ConvertChannelListResponseToChannelModel(ChannelListResponse channelListResponse)
         {
-            ChannelModel result = new ChannelModel(apiKey.ApiKeyId);
+            ChannelModel result = new ChannelModel();
 
             if (channelListResponse != null &&
                 channelListResponse.Items != null &&
@@ -27,9 +28,9 @@ namespace YAVDCore.Helpers
 
             return result;
         }
-        public static ChannelModel ConvertVideoListResponseToChannelModel(VideoListResponse videoListResponse, ApiKeyModel apiKey)
+        public static ChannelModel ConvertVideoListResponseToChannelModel(VideoListResponse videoListResponse)
         {
-            ChannelModel result = new ChannelModel(apiKey.ApiKeyId);
+            ChannelModel result = new ChannelModel();
 
             if (videoListResponse != null &&
                 videoListResponse.Items != null &&
@@ -52,10 +53,10 @@ namespace YAVDCore.Helpers
             {
                 foreach (var response in searchListResponse.Items)
                 {
-                    
+
                     result.Add(new VideoModel
                     {
-                        ChannelId = DatabaseMethods.GetChannels(response.Snippet.ChannelId).First().ChannelId,                       
+                        ChannelId = DatabaseMethods.GetChannels(response.Snippet.ChannelId).First().ChannelId,
                         YouTubeVideoId = response.Id.VideoId,
                         Title = response.Snippet.Title,
                         Description = response.Snippet.Description,

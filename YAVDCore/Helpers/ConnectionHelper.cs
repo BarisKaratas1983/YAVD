@@ -10,7 +10,8 @@ namespace YAVDCore.Helpers
     {
         public static string GetSQLiteConnectionString()
         {
-            return $"Data Source=.\\Database\\YAVD.db;Version=3;";
+            return $"Data Source=C:\\Db\\YAVD.db;Version=3;";
+            //return $"Data Source=.\\Database\\YAVD.db;Version=3;";
         }
     }
 }

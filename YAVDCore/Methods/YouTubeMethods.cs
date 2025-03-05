@@ -12,9 +12,10 @@ namespace YAVDCore.Methods
 {
     public class YouTubeMethods
     {
-        public string ApiKey;
         public static ChannelModel GetYouTubeChannelFromHandle(string handle, ApiKeyModel apiKey)
         {
+            ChannelModel result = null;
+
             if (string.IsNullOrWhiteSpace(handle))
                 return null;
 
@@ -24,38 +25,47 @@ namespace YAVDCore.Methods
             channelsRequest.ForHandle = "@" + handle;
 
             var channelListResponse = channelsRequest.Execute();
-            return null;// ModelHelper.ConvertChannelListResponseToChannelModel(channelListResponse) ?? null;
+            if (channelListResponse != null)
+            {
+                result = ModelHelper.ConvertChannelListResponseToChannelModel(channelListResponse);
+                result.ApiKeyId = apiKey.ApiKeyId;
+            }
+            return result;
         }
-        public static ChannelModel GetYouTubeChannelFromVideoUrl(string videoUrl)
+        public static ChannelModel GetYouTubeChannelFromVideoUrl(string videoUrl, ApiKeyModel apiKey)
         {
+            ChannelModel result = null;
+
             string videoId = YouTubeHelper.GetVideoId(videoUrl);
 
             if (string.IsNullOrWhiteSpace(videoUrl))
                 return null;
 
-            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(null); //MainSettingsMethods.LoadSettings().YouTubeApiKey);
+            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(apiKey.ApiKey);
 
             var videosRequest = youTubeService.Videos.List("snippet");
             videosRequest.Id = videoId;
 
             var videoListResponse = videosRequest.Execute();
-            return null;// ModelHelper.ConvertVideoListResponseToChannelModel(videoListResponse) ?? null;
+            if (videoListResponse != null)
+            {
+                result = ModelHelper.ConvertVideoListResponseToChannelModel(videoListResponse);
+                result.ApiKeyId = apiKey.ApiKeyId;
+            }
+            return result;
         }
-        public static List<VideoModel> GetYouTubeVideos(string youTubeChannelId, DateTime? lastVideoDate)
-        {
-            if (string.IsNullOrWhiteSpace(youTubeChannelId))
-                return null;
-
+        public static List<VideoModel> GetYouTubeVideos(ChannelModel channel)
+        {            
             MainSettingsModel mainSettings = MainSettingsMethods.LoadSettings();
-            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(null);// mainSettings.YouTubeApiKey);
+            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(DatabaseMethods.GetApiKeys().First(x => x.ApiKeyId == channel.ApiKeyId).ApiKey);
 
             var searchRequest = youTubeService.Search.List("snippet");
-            searchRequest.ChannelId = youTubeChannelId;
+            searchRequest.ChannelId = channel.YouTubeChannelId;
             searchRequest.Q = "";
             searchRequest.Type = "video";
             searchRequest.MaxResults = mainSettings.MaxResults;
             searchRequest.Order = SearchResource.ListRequest.OrderEnum.Date;
-            searchRequest.PublishedAfter = lastVideoDate;
+            searchRequest.PublishedAfter = channel.UpdateDateTime;
 
             var searchListResponse = searchRequest.Execute();
             return ModelHelper.ConvertSearchListResponseToVideoModelList(searchListResponse) ?? null;
