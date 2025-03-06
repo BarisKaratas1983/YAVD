@@ -15,7 +15,7 @@ namespace YAVDCore.Models
         public string Description { get; set; }
         public bool Active { get; set; }
         public DateTime CreateDateTime { get; set; }
-        public DateTime? UpdateDateTime { get; set; }
+        public DateTime? LastCheckDateTime { get; set; }        
         public virtual void CheckVideos() { }
     }
 }

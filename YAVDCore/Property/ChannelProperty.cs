@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Google.Apis.YouTube.v3.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,10 +14,14 @@ namespace YAVDCore.Property
         public override void CheckVideos()
         {
             List<VideoModel> vids = YouTubeMethods.GetYouTubeVideos(this);
-            DatabaseMethods.InsertYouTubeVideos(vids);
+
+            if (vids.Count > 0)
+            {               
+                DatabaseMethods.InsertYouTubeVideos(vids);
+                DatabaseMethods.UpdateChannelLastCheckDateTime(this.ChannelId, vids.Max(v => v.PublishedAt));
+            }
         }
     }
-
     public class ChannelMethods
     {
         public bool SaveChannelFromVideoLink(string videoLink, ApiKeyModel apiKey)
@@ -49,7 +54,7 @@ namespace YAVDCore.Property
                 CreateDateTime = x.CreateDateTime,
                 Description = x.Description,
                 Title = x.Title,
-                UpdateDateTime = x.UpdateDateTime,
+                LastCheckDateTime = x.LastCheckDateTime,
                 YouTubeChannelId = x.YouTubeChannelId
             });
         }

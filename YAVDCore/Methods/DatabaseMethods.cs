@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using YAVDCore.Helpers;
 using YAVDCore.Models;
 using Google.Apis.YouTube.v3.Data;
+using System.Web.UI.WebControls;
 
 namespace YAVDCore.Methods
 {
@@ -17,7 +18,7 @@ namespace YAVDCore.Methods
         public static MainSettingsModel GetMainSettings()
         {
             MainSettingsModel result = null;
-            
+
             using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
             {
                 try
@@ -55,8 +56,8 @@ namespace YAVDCore.Methods
             {
                 try
                 {
-                    cnn.Execute("Insert Into Channels(ApiKeyId, YouTubeChannelId, Title, Description, Active, CreateDateTime) " +
-                                "Values(@ApiKeyId, @YouTubeChannelId, @Title, @Description, 1, datetime('now', 'localtime'));", youTubeChannel);
+                    cnn.Execute("Insert Into Channels(ApiKeyId, YouTubeChannelId, Title, Description, Active) " +
+                                "Values(@ApiKeyId, @YouTubeChannelId, @Title, @Description, 1);", youTubeChannel);
                 }
                 catch (Exception)
                 {
@@ -65,21 +66,18 @@ namespace YAVDCore.Methods
         }
         public static void InsertYouTubeVideos(List<VideoModel> youTubeVideos)
         {
-            if (youTubeVideos != null)
+            foreach (var video in youTubeVideos)
             {
-                foreach (var youTubeVideo in youTubeVideos)
+                try
                 {
-                    try
+                    using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
                     {
-                        using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
-                        {
-                            cnn.Execute("Insert Into Videos(ChannelId, YouTubeVideoId, Title, Description, PublishedAt, CreateDateTime) " +
-                                        "Values(@ChannelId, @YouTubeVideoId, @Title, @Description, @PublishedAt, datetime('now', 'localtime'));", youTubeVideo);
-                        }
+                        cnn.Execute("Insert Or Replace Into Videos(ChannelId, YouTubeVideoId, Title, Description, PublishedAt) " +
+                                    "Values(@ChannelId, @YouTubeVideoId, @Title, @Description, @PublishedAt);", video);
                     }
-                    catch (Exception)
-                    {
-                    }
+                }
+                catch (Exception)
+                {
                 }
             }
         }
@@ -118,6 +116,19 @@ namespace YAVDCore.Methods
             }
 
             return result ?? new List<VideoModel>();
+        }
+        public static void UpdateChannelLastCheckDateTime(int channelId, DateTime lastCheckDateTime)
+        {
+            using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
+            {
+                try
+                {
+                    cnn.Execute("Update Channels Set LastCheckDateTime = @LastCheckDateTime Where ChannelId = @ChannelId;", new { LastCheckDateTime = lastCheckDateTime, ChannelId = channelId });
+                }
+                catch (Exception)
+                {
+                }
+            }
         }
     }
 }

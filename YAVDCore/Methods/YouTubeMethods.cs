@@ -55,7 +55,9 @@ namespace YAVDCore.Methods
             return result;
         }
         public static List<VideoModel> GetYouTubeVideos(ChannelModel channel)
-        {            
+        {
+            List<VideoModel> result;
+
             MainSettingsModel mainSettings = MainSettingsMethods.LoadSettings();
             YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(DatabaseMethods.GetApiKeys().First(x => x.ApiKeyId == channel.ApiKeyId).ApiKey);
 
@@ -65,10 +67,17 @@ namespace YAVDCore.Methods
             searchRequest.Type = "video";
             searchRequest.MaxResults = mainSettings.MaxResults;
             searchRequest.Order = SearchResource.ListRequest.OrderEnum.Date;
-            searchRequest.PublishedAfter = channel.UpdateDateTime;
+            searchRequest.PublishedAfter = channel.LastCheckDateTime;
 
             var searchListResponse = searchRequest.Execute();
-            return ModelHelper.ConvertSearchListResponseToVideoModelList(searchListResponse) ?? null;
+            result = ModelHelper.ConvertSearchListResponseToVideoModelList(searchListResponse);
+
+            foreach (var r in result)
+            {
+                r.ChannelId = channel.ChannelId;
+            }
+            
+            return result;
         }
     }
 }

@@ -11,7 +11,6 @@ namespace YAVDCore.Models
         public int ApiKeyId { get; set; }
         public string ApiKey { get; set; }
         public int Active { get; set; }
-        public DateTime CreateDateTime { get; set; }
-        public DateTime? UpdateDateTime { get; set; }
+        public DateTime CreateDateTime { get; set; }        
     }
 }

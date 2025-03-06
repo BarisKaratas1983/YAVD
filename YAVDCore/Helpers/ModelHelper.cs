@@ -53,10 +53,8 @@ namespace YAVDCore.Helpers
             {
                 foreach (var response in searchListResponse.Items)
                 {
-
                     result.Add(new VideoModel
                     {
-                        ChannelId = DatabaseMethods.GetChannels(response.Snippet.ChannelId).First().ChannelId,
                         YouTubeVideoId = response.Id.VideoId,
                         Title = response.Snippet.Title,
                         Description = response.Snippet.Description,
