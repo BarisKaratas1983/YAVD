@@ -49,7 +49,6 @@ namespace YAVDCore.Property
             items = DatabaseMethods.GetChannels().ConvertAll(x => new Channel
             {
                 Active = x.Active,
-                ApiKeyId = x.ApiKeyId,
                 ChannelId = x.ChannelId,
                 CreateDateTime = x.CreateDateTime,
                 Description = x.Description,

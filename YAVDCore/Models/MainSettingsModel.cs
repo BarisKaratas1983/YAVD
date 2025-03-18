@@ -9,5 +9,6 @@ namespace YAVDCore.Models
     public class MainSettingsModel
     {
         public int MaxResults { get; set; }
+        public int ApiKeyId { get; set; }
     }
 }

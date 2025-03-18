@@ -28,7 +28,6 @@ namespace YAVDCore.Methods
             if (channelListResponse != null)
             {
                 result = ModelHelper.ConvertChannelListResponseToChannelModel(channelListResponse);
-                result.ApiKeyId = apiKey.ApiKeyId;
             }
             return result;
         }
@@ -50,7 +49,6 @@ namespace YAVDCore.Methods
             if (videoListResponse != null)
             {
                 result = ModelHelper.ConvertVideoListResponseToChannelModel(videoListResponse);
-                result.ApiKeyId = apiKey.ApiKeyId;
             }
             return result;
         }
@@ -59,7 +57,7 @@ namespace YAVDCore.Methods
             List<VideoModel> result;
 
             MainSettingsModel mainSettings = MainSettingsMethods.LoadSettings();
-            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(DatabaseMethods.GetApiKeys().First(x => x.ApiKeyId == channel.ApiKeyId).ApiKey);
+            YouTubeService youTubeService = YouTubeHelper.GetYouTubeService(DatabaseMethods.GetApiKeys().First(x => x.ApiKeyId == mainSettings.ApiKeyId).ApiKey);
 
             var searchRequest = youTubeService.Search.List("snippet");
             searchRequest.ChannelId = channel.YouTubeChannelId;
@@ -76,7 +74,7 @@ namespace YAVDCore.Methods
             {
                 r.ChannelId = channel.ChannelId;
             }
-            
+
             return result;
         }
     }
