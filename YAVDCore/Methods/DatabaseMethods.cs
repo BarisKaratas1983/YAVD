@@ -56,8 +56,8 @@ namespace YAVDCore.Methods
             {
                 try
                 {
-                    cnn.Execute("Insert Into Channels(ApiKeyId, YouTubeChannelId, Title, Description, Active) " +
-                                "Values(@ApiKeyId, @YouTubeChannelId, @Title, @Description, 1);", youTubeChannel);
+                    cnn.Execute("Insert Into Channels(YouTubeChannelId, Title, Description, Active) " +
+                                "Values(@YouTubeChannelId, @Title, @Description, 1);", youTubeChannel);
                 }
                 catch (Exception)
                 {

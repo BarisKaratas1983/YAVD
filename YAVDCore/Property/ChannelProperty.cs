@@ -24,18 +24,17 @@ namespace YAVDCore.Property
     }
     public class ChannelMethods
     {
-        public bool SaveChannelFromVideoLink(string videoLink, ApiKeyModel apiKey)
-        {
-            bool result = false;
+        public ChannelModel SaveChannelFromVideoLink(string videoLink, ApiKeyModel apiKey)
+        {           
+             
             ChannelModel channel = YouTubeMethods.GetYouTubeChannelFromVideoUrl(videoLink, apiKey);
 
             if (channel != null)
             {
                 DatabaseMethods.InsertYouTubeChannel(channel);
-                result = true;
             }
 
-            return result;
+            return channel;
         }
     }
     public class ChannelProperty
