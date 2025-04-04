@@ -12,9 +12,10 @@ namespace YAVDCore.Methods
 {
     public class YouTubeMethods
     {
-        public static ChannelModel GetYouTubeChannelFromHandle(string handle, ApiKeyModel apiKey)
+        public static ChannelModel GetYouTubeChannelFromHandle(string channelUrl, ApiKeyModel apiKey)
         {
             ChannelModel result = null;
+            string handle = YouTubeHelper.GetChannelHandle(channelUrl);
 
             if (string.IsNullOrWhiteSpace(handle))
                 return null;
@@ -23,12 +24,11 @@ namespace YAVDCore.Methods
 
             var channelsRequest = youTubeService.Channels.List("snippet");
             channelsRequest.ForHandle = "@" + handle;
-
             var channelListResponse = channelsRequest.Execute();
-            if (channelListResponse != null)
-            {
+            
+            if (channelListResponse.Items != null)
                 result = ModelHelper.ConvertChannelListResponseToChannelModel(channelListResponse);
-            }
+
             return result;
         }
         public static ChannelModel GetYouTubeChannelFromVideoUrl(string videoUrl, ApiKeyModel apiKey)
@@ -44,12 +44,11 @@ namespace YAVDCore.Methods
 
             var videosRequest = youTubeService.Videos.List("snippet");
             videosRequest.Id = videoId;
-
             var videoListResponse = videosRequest.Execute();
-            if (videoListResponse != null)
-            {
+
+            if (videoListResponse != null)          
                 result = ModelHelper.ConvertVideoListResponseToChannelModel(videoListResponse);
-            }
+            
             return result;
         }
         public static List<VideoModel> GetYouTubeVideos(ChannelModel channel)

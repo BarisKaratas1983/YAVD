@@ -16,7 +16,7 @@ namespace YAVDCore.Property
             List<VideoModel> vids = YouTubeMethods.GetYouTubeVideos(this);
 
             if (vids.Count > 0)
-            {               
+            {
                 DatabaseMethods.InsertYouTubeVideos(vids);
                 DatabaseMethods.UpdateChannelLastCheckDateTime(this.ChannelId, vids.Max(v => v.PublishedAt));
             }
@@ -25,15 +25,15 @@ namespace YAVDCore.Property
     public class ChannelMethods
     {
         public ChannelModel SaveChannelFromVideoLink(string videoLink, ApiKeyModel apiKey)
-        {           
-             
+        {
             ChannelModel channel = YouTubeMethods.GetYouTubeChannelFromVideoUrl(videoLink, apiKey);
-
-            if (channel != null)
-            {
-                DatabaseMethods.InsertYouTubeChannel(channel);
-            }
-
+            DatabaseMethods.InsertYouTubeChannel(channel);
+            return channel;
+        }
+        public ChannelModel SaveChannelFromChannelLink(string channelLink, ApiKeyModel apiKey)
+        {
+            ChannelModel channel = YouTubeMethods.GetYouTubeChannelFromHandle(channelLink, apiKey);
+            DatabaseMethods.InsertYouTubeChannel(channel);
             return channel;
         }
     }

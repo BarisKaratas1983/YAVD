@@ -50,18 +50,26 @@ namespace YAVDCore.Methods
 
             return result;
         }
-        public static void InsertYouTubeChannel(ChannelModel youTubeChannel)
+        public static bool InsertYouTubeChannel(ChannelModel youTubeChannel)
         {
+            bool result = false;
+
             using (IDbConnection cnn = new SQLiteConnection(ConnectionHelper.GetSQLiteConnectionString()))
             {
                 try
                 {
-                    cnn.Execute("Insert Into Channels(YouTubeChannelId, Title, Description, Active) " +
-                                "Values(@YouTubeChannelId, @Title, @Description, 1);", youTubeChannel);
+                    long dbId = cnn.QuerySingle<long>("Insert Into Channels(YouTubeChannelId, Title, Description, Active) " +
+                                "Values(@YouTubeChannelId, @Title, @Description, 1); select last_insert_rowid();", youTubeChannel);
+                    if (dbId > 0)                    
+                        youTubeChannel = cnn.QuerySingle<ChannelModel>("Select * From Channels Where ChannelId = @ChannelId", new { ChannelId = dbId });                    
+                    else
+                        result = false;
                 }
                 catch (Exception)
                 {
                 }
+                
+                return result;
             }
         }
         public static void InsertYouTubeVideos(List<VideoModel> youTubeVideos)

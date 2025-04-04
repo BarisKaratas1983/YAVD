@@ -69,7 +69,6 @@ namespace YAVDConsoleApp.Methods
                 }
             }
         }
-
         private static void AddChannelFromVideoUrl()
         {
             Console.Clear();
@@ -93,7 +92,24 @@ namespace YAVDConsoleApp.Methods
         }
         private static void AddChannelFromChannelUrl()
         {
+            Console.Clear();
+            Console.Write("Channel link :");
 
+            string channelLink = Console.ReadLine();
+
+            if (!string.IsNullOrWhiteSpace(channelLink))
+            {
+                YAVD y = new YAVD();
+                ChannelModel c = y.Channels.Methods.SaveChannelFromChannelLink(channelLink, y.ApiKey.Items.First(x => x.ApiKeyId == y.MainSettings.Item.ApiKeyId));
+                Console.WriteLine();
+
+                if (c != null)
+                    Console.WriteLine("{0} added", c.Title);
+            }
+
+            Console.WriteLine("");
+            Console.WriteLine("Press any key to return to the main menu...");
+            Console.ReadKey();
         }
         private static void ChannelList()
         {

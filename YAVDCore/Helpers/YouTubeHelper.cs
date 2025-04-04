@@ -3,6 +3,7 @@ using Google.Apis.YouTube.v3;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -20,7 +21,7 @@ namespace YAVDCore.Helpers
             string result = null;
             
             if (string.IsNullOrWhiteSpace(videoUrl))
-                return result;
+                return string.Empty;
 
             try
             {
@@ -49,6 +50,24 @@ namespace YAVDCore.Helpers
             }
 
             return result;
+        }
+        public static string GetChannelHandle(string channelUrl)
+        {
+            if (string.IsNullOrEmpty(channelUrl))
+            {
+                return string.Empty;
+            }
+
+            int atIndex = channelUrl.IndexOf('@');
+
+            if (atIndex != -1 && atIndex < channelUrl.Length - 1)
+            {
+                return channelUrl.Substring(atIndex + 1);
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
     }
 }
