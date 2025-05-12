@@ -9,35 +9,9 @@ using YAVDCore.Models;
 
 namespace YAVDConsoleApp.Methods
 {
-    public class Menu
+    public class MenuMethods
     {
-        public static bool Show()
-        {
-            Console.Clear();
-            Console.WriteLine("YAVD Main Menu");
-            Console.WriteLine("==============");
-            Console.WriteLine("1) Add Channel");
-            Console.WriteLine("2) Channel List");
-            Console.WriteLine("3) Check Videos");
-            Console.WriteLine("4) Exit");
-            Console.Write("\r\nChoice: ");
 
-            switch (Console.ReadLine())
-            {
-                case "1":
-                    AddChannelMenu();
-                    return true;
-                case "2":
-                    ChannelList();
-                    return true;
-                case "3":                    
-                    return true;
-                case "4":
-                    return false;
-                default:
-                    return true;
-            }
-        }
         private static void AddChannelMenu()
         {
             bool showChannelMenu = true;
@@ -79,6 +53,7 @@ namespace YAVDConsoleApp.Methods
             if (!string.IsNullOrWhiteSpace(videoLink))
             {
                 YAVD y = new YAVD();
+                
                 ChannelModel c = y.Channels.Methods.SaveChannelFromVideoLink(videoLink, y.ApiKey.Items.First(x => x.ApiKeyId == y.MainSettings.Item.ApiKeyId));
                 Console.WriteLine();
 
