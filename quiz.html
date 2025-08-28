@@ -1,0 +1,249 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C# Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+        <h1 class="text-2xl font-bold text-center mb-4">C# Quiz</h1>
+        <div id="quiz" class="space-y-4">
+            <!-- Questions will be dynamically inserted here -->
+        </div>
+        <div id="result" class="hidden mt-4 text-center"></div>
+        <button id="nextBtn" class="hidden mt-4 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Sonraki Soru</button>
+        <button id="retryBtn" class="hidden mt-4 w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">Tekrar Dene</button>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Aşağıdaki veri türlerinden hangisi ondalıklı sayıları saklamak için en yüksek hassasiyete sahiptir?",
+                options: ["float", "double", "decimal", "long"],
+                correct: 2,
+                feedback: "decimal, ondalıklı sayılar için en yüksek hassasiyete sahiptir çünkü 28-29 basamaklı hassasiyet sunar."
+            },
+            {
+                question: "Bir char türü değişkenine atanabilecek en büyük Unicode karakter değeri nedir?",
+                options: ["127", "255", "65535", "2147483647"],
+                correct: 2,
+                feedback: "char, 16-bit Unicode karakterleri tutar ve maksimum değeri 65535'tir."
+            },
+            {
+                question: "Aşağıdaki ifadelerden hangisi bir DateTime nesnesinin varsayılan değerini temsil eder?",
+                options: ["DateTime.Now", "DateTime.MinValue", "new DateTime()", "DateTime.UtcNow"],
+                correct: 1,
+                feedback: "DateTime.MinValue, DateTime nesnesinin varsayılan değeridir (01/01/0001 00:00:00)."
+            },
+            {
+                question: "Bool veri türünde bir değişken kaç farklı değer alabilir?",
+                options: ["Sonsuz", "2 (true/false)", "256", "0'dan 1'e kadar"],
+                correct: 1,
+                feedback: "Bool veri türü yalnızca true ve false değerlerini alabilir."
+            },
+            {
+                question: "Byte veri türünde bir değişkenin alabileceği maksimum değer nedir?",
+                options: ["127", "255", "32767", "2147483647"],
+                correct: 1,
+                feedback: "Byte, 8-bit işaretsiz bir tamsayıdır ve 0-255 arasında değer alır."
+            },
+            {
+                question: "Aşağıdaki tür dönüşümlerinden hangisi bilinçsiz (implicit) dönüşüme örnektir?",
+                options: ["int'den double'a", "double'dan int'e", "string'den int'e", "object'den string'e"],
+                correct: 0,
+                feedback: "int'den double'a dönüşüm bilinçsizdir çünkü veri kaybı olmaz."
+            },
+            {
+                question: "Bilinçli (explicit) tür dönüşümü yapmak için kullanılan operatör hangisidir?",
+                options: ["as", "is", "(tip)", "typeof"],
+                correct: 2,
+                feedback: "(tip) operatörü, bilinçli tür dönüşümü (cast) için kullanılır."
+            },
+            {
+                question: "Aşağıdaki kodda hangi satır derleme hatası verir? (Bilinçsiz dönüşüm bağlamında)<br><code>int i = 10;<br>double d = i; // Satır 1<br>float f = d; // Satır 2<br>long l = i; // Satır 3</code>",
+                options: ["Satır 1", "Satır 2", "Satır 3", "Hiçbiri"],
+                correct: 1,
+                feedback: "Satır 2 hata verir çünkü double'dan float'a bilinçsiz dönüşüm yapılamaz; explicit cast gerekir."
+            },
+            {
+                question: "Bir short türü değişkeni int'e dönüştürmek bilinçsiz dönüşüm müdür?",
+                options: ["Evet, çünkü short int'ten daha küçüktür", "Hayır, explicit cast gerektirir", "Yalnızca negatif değerlerde", "Yalnızca pozitif değerlerde"],
+                correct: 0,
+                feedback: "short'tan int'e dönüşüm bilinçsizdir çünkü veri kaybı olmaz."
+            },
+            {
+                question: "Aşağıdaki dönüşümlerden hangisi veri kaybına neden olabilir?",
+                options: ["int'den long'a", "float'tan double'a", "double'dan float'a", "byte'dan int'e"],
+                correct: 2,
+                feedback: "double'dan float'a dönüşüm veri kaybına neden olabilir çünkü float daha az hassastır."
+            },
+            {
+                question: "String bir değeri int'e dönüştürmek için en güvenli yöntem hangisidir (hata durumunda exception atmadan)?",
+                options: ["Convert.ToInt32()", "int.Parse()", "int.TryParse()", "(int)string"],
+                correct: 2,
+                feedback: "int.TryParse(), hata durumunda exception atmaz ve sonucu out parametresiyle döner."
+            },
+            {
+                question: "Aşağıdaki kodda, eğer 'input' 'abc' ise ne olur?<br><code>string input = 'abc';<br>int result;<br>bool success = int.TryParse(input, out result);</code>",
+                options: ["success true olur, result 0 olur", "success false olur, result 0 olur", "Exception atar", "success true olur, result NaN olur"],
+                correct: 1,
+                feedback: "int.TryParse 'abc' için false döner ve result 0 olarak kalır."
+            },
+            {
+                question: "Convert.ToDouble() yöntemi ile Parse() arasındaki fark nedir?",
+                options: ["Convert null'ı kabul eder ve varsayılan değer döndürür", "Parse null'ı kabul eder ama Convert etmez", "Hiçbir fark yok", "Parse daha hızlıdır"],
+                correct: 0,
+                feedback: "Convert.ToDouble() null için 0 döner, Parse() ise exception atar."
+            },
+            {
+                question: "Aşağıdaki ifadelerden hangisi bir string'i DateTime'a dönüştürmek için kullanılır?",
+                options: ["DateTime.Parse()", "Convert.ToString()", "DateTime.TryConvert()", "(DateTime)string"],
+                correct: 0,
+                feedback: "DateTime.Parse(), string'i DateTime'a dönüştürmek için kullanılır."
+            },
+            {
+                question: "int.Parse('123.45') ifadesi ne sonuç verir?",
+                options: ["123 döner", "123.45 döner (ama int değil)", "FormatException atar", "Null döner"],
+                correct: 2,
+                feedback: "int.Parse('123.45') FormatException atar çünkü ondalıklı sayı int'e uygun değildir."
+            },
+            {
+                question: "Object tipi hakkında aşağıdakilerden hangisi doğrudur?",
+                options: ["Tüm veri türlerinin temel sınıfıdır", "Yalnızca değer tiplerini saklar", "Referans tipi değildir", "Sabit boyuttadır"],
+                correct: 0,
+                feedback: "Object, C#'ta tüm veri türlerinin temel sınıfıdır."
+            },
+            {
+                question: "Bir console uygulamasında kullanıcıdan input almak için kullanılan temel yöntem hangisidir?",
+                options: ["Console.WriteLine()", "Console.ReadLine()", "Console.ReadKey()", "Console.Clear()"],
+                correct: 1,
+                feedback: "Console.ReadLine(), kullanıcıdan metin girişi almak için kullanılır."
+            },
+            {
+                question: "Object bir değişkene int atamak boxing işlemidir, peki unboxing nedir?",
+                options: ["Object'ten int'e dönüştürmek", "int'ten object'e dönüştürmek", "String'ten object'e", "Hiçbiri"],
+                correct: 0,
+                feedback: "Unboxing, object türünden bir değer tipine (ör. int) dönüştürme işlemidir."
+            },
+            {
+                question: "Console.Write('{0} {1}', 'Merhaba', 'Dünya'); ifadesi ne yazar?",
+                options: ["MerhabaDünya", "Merhaba Dünya", "{0} {1}", "Hata verir"],
+                correct: 1,
+                feedback: "Console.Write('{0} {1}', 'Merhaba', 'Dünya') 'Merhaba Dünya' yazar."
+            },
+            {
+                question: "Bir object değişkenine atanan bir string değeri, daha sonra nasıl string'e geri dönüştürülür?",
+                options: ["Yalnızca (string)object ile", "Yalnızca as string ile", "Her ikisiyle de, ama as null dönebilir", "Dönüştürmeye gerek yok, doğrudan kullanılır"],
+                correct: 2,
+                feedback: "Hem (string) hem as kullanılabilir, ancak as null dönebilir."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+
+        const quizContainer = document.getElementById('quiz');
+        const nextBtn = document.getElementById('nextBtn');
+        const retryBtn = document.getElementById('retryBtn');
+        const resultDiv = document.getElementById('result');
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            quizContainer.innerHTML = `
+                <h2 class="text-lg font-semibold">${currentQuestion + 1}. ${q.question}</h2>
+                <div class="space-y-2">
+                    ${q.options.map((option, index) => `
+                        <button class="w-full text-left p-2 border rounded hover:bg-gray-100" onclick="checkAnswer(${index})">${option}</button>
+                    `).join('')}
+                </div>
+                <div id="feedback" class="hidden mt-2 p-2 rounded"></div>
+            `;
+            nextBtn.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+            retryBtn.classList.add('hidden');
+        }
+
+        function checkAnswer(selected) {
+            const q = questions[currentQuestion];
+            const feedbackDiv = document.getElementById('feedback');
+            feedbackDiv.classList.remove('hidden');
+            if (selected === q.correct) {
+                score++;
+                feedbackDiv.classList.add('bg-green-100', 'text-green-800');
+                feedbackDiv.textContent = "Doğru! " + q.feedback;
+            } else {
+                feedbackDiv.classList.add('bg-red-100', 'text-red-800');
+                feedbackDiv.textContent = `Yanlış! Doğru cevap: ${q.options[q.correct]}. ${q.feedback}`;
+            }
+            document.querySelectorAll('button:not(#nextBtn, #retryBtn)').forEach(btn => btn.disabled = true);
+            nextBtn.classList.remove('hidden');
+        }
+
+        function showResult() {
+            quizContainer.innerHTML = '';
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = `Quiz tamamlandı! Puanınız: ${score}/${questions.length} (${Math.round((score / questions.length) * 100)}%)`;
+            nextBtn.classList.add('hidden');
+            retryBtn.classList.remove('hidden');
+        }
+
+        nextBtn.addEventListener('click', () => {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        });
+
+        retryBtn.addEventListener('click', () => {
+            currentQuestion = 0;
+            score = 0;
+            loadQuestion();
+        });
+
+        loadQuestion();
+    </script>
+</body>
+</html>
