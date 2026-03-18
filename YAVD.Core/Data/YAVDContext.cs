@@ -12,6 +12,7 @@ namespace YAVD.Core.Data
     {
         public DbSet<Channel> Channels { get; set; }
         public DbSet<Video> Videos { get; set; }
+        public DbSet<AppSetting> AppSettings { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite("Data Source=yavd_database.db");

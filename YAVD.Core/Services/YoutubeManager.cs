@@ -1,4 +1,5 @@
-﻿using YAVD.Core.Models;
+﻿using FFMpegCore;
+using YAVD.Core.Models;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 
@@ -65,5 +66,51 @@ namespace YAVD.Core.Services
                 await _youtube.Videos.Streams.DownloadAsync(audioStreamInfo, destinationPath);
             }
         }
+
+        // Başına using YoutubeExplode.Videos.Streams; eklediğinden emin ol.
+
+        public async Task DownloadVideoWithFFmpegAsync(string videoId, string savePath, VideoResolution targetRes)
+        {
+            GlobalFFOptions.Configure(new FFOptions { BinaryFolder = AppDomain.CurrentDomain.BaseDirectory });
+
+            var streamManifest = await _youtube.Videos.Streams.GetManifestAsync(videoId);
+
+            // DEĞİŞİKLİK BURADA: var yerine IVideoStreamInfo kullanıyoruz
+            IVideoStreamInfo videoStreamInfo = streamManifest
+                .GetVideoOnlyStreams()
+                .Where(s => s.VideoQuality.MaxHeight <= (int)targetRes)
+                .OrderByDescending(s => s.VideoQuality.MaxHeight)
+                .FirstOrDefault();
+
+            // Şimdi ??= operatörü sorunsuz çalışacaktır
+            videoStreamInfo ??= streamManifest.GetVideoOnlyStreams().GetWithHighestVideoQuality();
+
+            var audioStreamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+
+            // ... geri kalan kodlar aynı ...
+            string tempVideo = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"temp_v_{videoId}.mp4");
+            string tempAudio = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"temp_a_{videoId}.m4a");
+
+            try
+            {
+                await _youtube.Videos.Streams.DownloadAsync(videoStreamInfo, tempVideo);
+                await _youtube.Videos.Streams.DownloadAsync(audioStreamInfo, tempAudio);
+
+                await FFMpegArguments
+                    .FromFileInput(tempVideo)
+                    .AddFileInput(tempAudio)
+                    .OutputToFile(savePath, true, options => options.CopyChannel())
+                    .ProcessAsynchronously();
+            }
+            finally
+            {
+                if (File.Exists(tempVideo)) File.Delete(tempVideo);
+                if (File.Exists(tempAudio)) File.Delete(tempAudio);
+            }
+        }
+
+
     }
+
+
 }

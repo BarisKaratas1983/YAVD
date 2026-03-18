@@ -105,43 +105,59 @@ async Task ProcessChannelScan(Channel channel, YAVDContext db)
 {
     Console.WriteLine($"\n--> {channel.Name} kontrol ediliyor...");
 
+    var setting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadAction");
+    var currentAction = (DownloadAction)int.Parse(setting?.Value ?? "0");
     var newVideos = await ytService.GetNewVideosFromChannelAsync(channel);
 
     if (newVideos.Any())
-    {      
-        string downloadPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Downloads");
-        if (!Directory.Exists(downloadPath)) Directory.CreateDirectory(downloadPath);
-
+    {
         foreach (var v in newVideos)
         {
             if (!db.Videos.Any(vid => vid.YoutubeId == v.YoutubeId))
             {
-                string safeTitle = FileNameHelper.CleanFileName(v.Title);
-                string fullFilePath = Path.Combine(downloadPath, $"{safeTitle}.m4a");
+                db.Videos.Add(v);
 
-                Console.WriteLine($"   [INDIRILIYOR] {v.Title}...");
-
-                try
+                if (currentAction != DownloadAction.None)
                 {
-                    await ytService.DownloadAudioAsync(v.YoutubeId, fullFilePath);
-
+                    await HandleDownloads(v, currentAction);
                     v.IsDownloaded = true;
-                    db.Videos.Add(v);
-                    Console.WriteLine($"   [TAMAMLANDI] {v.Title}");
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"   [HATA] İndirilemedi: {ex.Message}");
-                }
+
+                Console.WriteLine($"   [KAYDEDİLDİ] {v.Title}");
             }
         }
 
         channel.LastCheckedDate = DateTime.Now;
         await db.SaveChangesAsync();
     }
-    else
+}
+async Task HandleDownloads(Video v, DownloadAction action)
+{
+    using var db = new YAVDContext();
+    string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+    // Ayarları oku
+    var resSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultVideoResolution");
+    var targetRes = (VideoResolution)int.Parse(resSetting?.Value ?? "1080");
+
+    string safeTitle = FileNameHelper.CleanFileName(v.Title);
+
+    // SES İNDİRME
+    if (action == DownloadAction.AudioOnly || action == DownloadAction.Both)
     {
-        Console.WriteLine("   Yeni video bulunamadı.");
+        string path = Path.Combine(baseDir, "Downloads", "Audios", $"{safeTitle}.m4a");
+        Directory.CreateDirectory(Path.GetDirectoryName(path));
+        await ytService.DownloadAudioAsync(v.YoutubeId, path);
+    }
+
+    // VİDEO İNDİRME (YENİ SİSTEM)
+    if (action == DownloadAction.VideoOnly || action == DownloadAction.Both)
+    {
+        string path = Path.Combine(baseDir, "Downloads", "Videos", $"{safeTitle}.mp4");
+        Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+        Console.WriteLine($"   [VİDEO İNDİRİLİYOR] Hedef: {targetRes}p...");
+        await ytService.DownloadVideoWithFFmpegAsync(v.YoutubeId, path, targetRes);
     }
 }
 async Task ListChannelsAction()
