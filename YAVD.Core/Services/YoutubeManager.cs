@@ -53,47 +53,39 @@ namespace YAVD.Core.Services
 
             return videosFound;
         }
-        public async Task DownloadAudioAsync(string videoId, string destinationPath)
-        {            
+        public async Task DownloadAudioAsync(string videoId, string destinationPath, IProgress<double> progress = null)
+        {
             var streamManifest = await _youtube.Videos.Streams.GetManifestAsync(videoId);
-         
-            var audioStreamInfo = streamManifest
-                .GetAudioOnlyStreams()
-                .GetWithHighestBitrate();
+            var audioStreamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
 
             if (audioStreamInfo != null)
-            {                
-                await _youtube.Videos.Streams.DownloadAsync(audioStreamInfo, destinationPath);
+            {
+                // progress parametresini buraya geçiyoruz
+                await _youtube.Videos.Streams.DownloadAsync(audioStreamInfo, destinationPath, progress);
             }
         }
-
-        // Başına using YoutubeExplode.Videos.Streams; eklediğinden emin ol.
-
-        public async Task DownloadVideoWithFFmpegAsync(string videoId, string savePath, VideoResolution targetRes)
+        public async Task DownloadVideoWithFFmpegAsync(string videoId, string savePath, VideoResolution targetRes, IProgress<double> progress = null)
         {
             GlobalFFOptions.Configure(new FFOptions { BinaryFolder = AppDomain.CurrentDomain.BaseDirectory });
-
             var streamManifest = await _youtube.Videos.Streams.GetManifestAsync(videoId);
 
-            // DEĞİŞİKLİK BURADA: var yerine IVideoStreamInfo kullanıyoruz
             IVideoStreamInfo videoStreamInfo = streamManifest
                 .GetVideoOnlyStreams()
                 .Where(s => s.VideoQuality.MaxHeight <= (int)targetRes)
                 .OrderByDescending(s => s.VideoQuality.MaxHeight)
-                .FirstOrDefault();
-
-            // Şimdi ??= operatörü sorunsuz çalışacaktır
-            videoStreamInfo ??= streamManifest.GetVideoOnlyStreams().GetWithHighestVideoQuality();
+                .FirstOrDefault() ?? streamManifest.GetVideoOnlyStreams().GetWithHighestVideoQuality();
 
             var audioStreamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
 
-            // ... geri kalan kodlar aynı ...
             string tempVideo = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"temp_v_{videoId}.mp4");
             string tempAudio = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"temp_a_{videoId}.m4a");
 
             try
             {
-                await _youtube.Videos.Streams.DownloadAsync(videoStreamInfo, tempVideo);
+                // Video ve ses ayrı indiği için progress'i ikiye bölebiliriz 
+                // veya basitlik adına sadece video indirmeyi takip edebiliriz.
+                // Burada video indirme aşamasını progress ile takip ediyoruz:
+                await _youtube.Videos.Streams.DownloadAsync(videoStreamInfo, tempVideo, progress);
                 await _youtube.Videos.Streams.DownloadAsync(audioStreamInfo, tempAudio);
 
                 await FFMpegArguments
@@ -108,9 +100,5 @@ namespace YAVD.Core.Services
                 if (File.Exists(tempAudio)) File.Delete(tempAudio);
             }
         }
-
-
     }
-
-
 }

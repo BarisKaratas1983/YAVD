@@ -9,12 +9,13 @@ namespace YAVD.Core.Helpers
     public static class FileNameHelper
     {
         public static string CleanFileName(string fileName)
-        {            
+        {
             foreach (char c in Path.GetInvalidFileNameChars())
             {
                 fileName = fileName.Replace(c, ' ');
             }
-            return fileName.Trim();
+
+            return System.Text.RegularExpressions.Regex.Replace(fileName, @"\s+", " ").Trim();
         }
     }
 }

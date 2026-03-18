@@ -9,7 +9,7 @@ namespace YAVD.Core.Models
     public class AppSetting
     {
         public int Id { get; set; }
-        public string Key { get; set; } // Örn: "DefaultDownloadAction"
-        public string Value { get; set; } // Örn: "1" (AudioOnly)
+        public string Key { get; set; }
+        public string Value { get; set; }
     }
 }
