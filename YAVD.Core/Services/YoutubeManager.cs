@@ -8,69 +8,53 @@ namespace YAVD.Core.Services
     public class YoutubeManager
     {
         private readonly YoutubeClient _youtube;
+        public YoutubeManager() => _youtube = new YoutubeClient();
 
-        public YoutubeManager()
-        {
-            _youtube = new YoutubeClient();
-        }
-        public async Task<Channel> GetChannelMetadataAsync(string videoUrl)
+        public async Task<(string Id, string Title, string Author)> GetVideoMetadataExtendedAsync(string videoUrl)
         {
             var video = await _youtube.Videos.GetAsync(videoUrl);
-
-            return new Channel
-            {
-                YoutubeId = video.Author.ChannelId,
-                Name = video.Author.Title,
-                Url = video.Author.ChannelUrl,
-                LastCheckedDate = DateTime.Now
-            };
+            return (video.Id.Value, video.Title, video.Author.Title);
         }
-        public async Task<List<YAVD.Core.Models.Video>> GetNewVideosFromChannelAsync(Channel channel)
+
+        public async Task<List<(string Id, string Title, string Author)>> GetPlaylistVideosExtendedAsync(string playlistUrl)
         {
-            var videosFound = new List<YAVD.Core.Models.Video>();
-
-            var uploads = _youtube.Channels.GetUploadsAsync(channel.YoutubeId);
-
-            await foreach (var playlistVideo in uploads)
+            var videos = new List<(string Id, string Title, string Author)>();
+            var playlistVideos = _youtube.Playlists.GetVideosAsync(playlistUrl);
+            await foreach (var video in playlistVideos)
             {
-                var videoDetails = await _youtube.Videos.GetAsync(playlistVideo.Id);
-
-                if (videoDetails.UploadDate.LocalDateTime <= channel.LastCheckedDate)
-                    break;
-
-                if (videoDetails.Duration != null && videoDetails.Duration.Value.TotalSeconds <= 60)
-                    continue;
-
-                videosFound.Add(new YAVD.Core.Models.Video
-                {
-                    YoutubeId = videoDetails.Id,
-                    Title = videoDetails.Title,
-                    PublishedAt = videoDetails.UploadDate.LocalDateTime,
-                    ChannelId = channel.Id,
-                    IsDownloaded = false
-                });
+                videos.Add((video.Id.Value, video.Title, video.Author.Title));
             }
-
-            return videosFound;
+            return videos;
         }
-        public async Task DownloadAudioAsync(string videoId, string destinationPath, IProgress<double> progress = null)
+
+        public async Task DownloadAudioAsync(string videoId, string savePath, string title, string artist, AudioQuality quality, IProgress<double>? progress = null)
         {
+            GlobalFFOptions.Configure(new FFOptions { BinaryFolder = AppDomain.CurrentDomain.BaseDirectory });
             var streamManifest = await _youtube.Videos.Streams.GetManifestAsync(videoId);
-            var audioStreamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+            var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
 
-            if (audioStreamInfo != null)
+            string tempAudio = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"temp_{videoId}.m4a");
+            try
             {
-                // progress parametresini buraya geçiyoruz
-                await _youtube.Videos.Streams.DownloadAsync(audioStreamInfo, destinationPath, progress);
+                await _youtube.Videos.Streams.DownloadAsync(streamInfo, tempAudio, progress);
+
+                // ID3v2 versiyon 3 ve doğru metadata etiketleri
+                await FFMpegArguments
+                    .FromFileInput(tempAudio)
+                    .OutputToFile(savePath, true, options => options
+                        .WithAudioBitrate((int)quality)
+                        .WithCustomArgument($"-id3v2_version 3 -metadata title=\"{title}\" -metadata artist=\"{artist}\" -metadata comment=\"Downloaded by YAVD\""))
+                    .ProcessAsynchronously();
             }
+            finally { if (File.Exists(tempAudio)) File.Delete(tempAudio); }
         }
-        public async Task DownloadVideoWithFFmpegAsync(string videoId, string savePath, VideoResolution targetRes, IProgress<double> progress = null)
+
+        public async Task DownloadVideoWithFFmpegAsync(string videoId, string savePath, VideoResolution targetRes, IProgress<double>? progress = null)
         {
             GlobalFFOptions.Configure(new FFOptions { BinaryFolder = AppDomain.CurrentDomain.BaseDirectory });
             var streamManifest = await _youtube.Videos.Streams.GetManifestAsync(videoId);
 
-            IVideoStreamInfo videoStreamInfo = streamManifest
-                .GetVideoOnlyStreams()
+            var videoStreamInfo = streamManifest.GetVideoOnlyStreams()
                 .Where(s => s.VideoQuality.MaxHeight <= (int)targetRes)
                 .OrderByDescending(s => s.VideoQuality.MaxHeight)
                 .FirstOrDefault() ?? streamManifest.GetVideoOnlyStreams().GetWithHighestVideoQuality();
@@ -82,9 +66,6 @@ namespace YAVD.Core.Services
 
             try
             {
-                // Video ve ses ayrı indiği için progress'i ikiye bölebiliriz 
-                // veya basitlik adına sadece video indirmeyi takip edebiliriz.
-                // Burada video indirme aşamasını progress ile takip ediyoruz:
                 await _youtube.Videos.Streams.DownloadAsync(videoStreamInfo, tempVideo, progress);
                 await _youtube.Videos.Streams.DownloadAsync(audioStreamInfo, tempAudio);
 
