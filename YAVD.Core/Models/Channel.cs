@@ -10,9 +10,8 @@ namespace YAVD.Core.Models
     {
         public int Id { get; set; }
         public string YoutubeId { get; set; }
-        public string Name { get; set; }
-        public string Url { get; set; }
-        public DateTime LastVideoDate { get; set; }
+        public string Name { get; set; }        
+        public DateTime? LastVideoDate { get; set; }
         public bool Active { get; set; } = true;
     }
 }

@@ -11,10 +11,13 @@ while (true)
     Console.Clear();
     Console.WriteLine("=== YAVD: Youtube Audio Video Downloader ===");
     Console.WriteLine("1. Direkt Video/Ses İndir");
+    Console.WriteLine("2. Kanallar"); // Yeni eklenen
     Console.WriteLine("0. Çıkış");
     Console.Write("\nSeçiminiz: ");
     string choice = Console.ReadLine();
+
     if (choice == "1") await DirectDownloadMenu();
+    else if (choice == "2") await ChannelsMenu(); // Yeni metod
     else if (choice == "0") return;
 }
 async Task DirectDownloadMenu()
@@ -32,6 +35,99 @@ async Task DirectDownloadMenu()
         else if (choice == "2") await HandleDirectDownload(true);
         else if (choice == "0") break;
     }
+}
+async Task ChannelsMenu()
+{
+    while (true)
+    {
+        Console.Clear();
+        Console.WriteLine("=== Kanal Yönetimi ===");
+        Console.WriteLine("1) Kanal Ekle");
+        Console.WriteLine("2) Kanal Listesi");
+        Console.WriteLine("3) Kanal Düzenle/Sil");
+        Console.WriteLine("0) Ana Menüye Dön");
+        Console.Write("\nSeçiminiz: ");
+        string choice = Console.ReadLine();
+
+        if (choice == "1") await AddChannelAction();
+        else if (choice == "2") await ListChannelsAction();
+        else if (choice == "3") await EditDeleteChannelAction();
+        else if (choice == "0") break;
+    }
+}
+async Task AddChannelAction()
+{
+    Console.Write("\nKanal veya Video Linki: ");
+    string url = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(url)) return;
+
+    try
+    {
+        Console.WriteLine("Kanal bilgileri alınıyor...");
+        var channelMetadata = await ytService.GetChannelMetadataAsync(url);
+
+        using var db = new YAVDContext();
+        if (await db.Channels.AnyAsync(c => c.YoutubeId == channelMetadata.YoutubeId))
+        {
+            Console.WriteLine("\n[UYARI] Bu kanal zaten kayıtlı!");
+        }
+        else
+        {
+            db.Channels.Add(channelMetadata);
+            await db.SaveChangesAsync();
+            Console.WriteLine($"\n[BAŞARILI] {channelMetadata.Name} kanalı eklendi.");
+        }
+    }
+    catch (Exception ex) { Console.WriteLine($"Hata: {ex.Message}"); }
+
+    Console.WriteLine("\nDevam etmek için bir tuşa basın...");
+    Console.ReadKey();
+}
+async Task ListChannelsAction()
+{
+    Console.Clear();
+    Console.WriteLine("=== Kayıtlı Kanallar ===\n");
+    using var db = new YAVDContext();
+    var channels = await db.Channels.ToListAsync();
+
+    if (!channels.Any()) Console.WriteLine("Henüz kayıtlı kanal yok.");
+
+    foreach (var c in channels)
+    {
+        string status = c.Active ? "Aktif" : "Pasif";
+        Console.WriteLine($"ID: {c.Id} | İsim: {c.Name} | Durum: {status}");
+    }
+    Console.WriteLine("Devam etmek için bir tuşa basın...");
+    Console.ReadKey();
+}
+async Task EditDeleteChannelAction()
+{
+    Console.Write("\nİşlem yapmak istediğiniz Kanal ID: ");
+    if (!int.TryParse(Console.ReadLine(), out int id)) return;
+
+    using var db = new YAVDContext();
+    var channel = await db.Channels.FindAsync(id);
+    if (channel == null) { Console.WriteLine("Kanal bulunamadı."); Console.ReadKey(); return; }
+
+    Console.WriteLine($"\nSeçili: {channel.Name}");
+    Console.WriteLine("1) Aktif/Pasif Yap");
+    Console.WriteLine("2) Kanalı Sil");
+    Console.Write("Seçiminiz: ");
+    string choice = Console.ReadLine();
+
+    if (choice == "1")
+    {
+        channel.Active = !channel.Active;
+        await db.SaveChangesAsync();
+        Console.WriteLine($"Kanal durumu {(channel.Active ? "Aktif" : "Pasif")} olarak güncellendi.");
+    }
+    else if (choice == "2")
+    {
+        db.Channels.Remove(channel);
+        await db.SaveChangesAsync();
+        Console.WriteLine("Kanal başarıyla silindi.");
+    }
+    Console.ReadKey();
 }
 async Task HandleDirectDownload(bool isPlaylist)
 {

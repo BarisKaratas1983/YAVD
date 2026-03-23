@@ -77,5 +77,66 @@ namespace YAVD.Core.Services
                 if (File.Exists(tempAudio)) File.Delete(tempAudio);
             }
         }
+        public async Task<Channel> GetChannelMetadataAsync(string url)
+        {
+            YoutubeExplode.Channels.Channel channel;
+
+            try
+            {
+                // 1. URL tipine göre kanalı bul (Daha önce konuştuğumuz 4 farklı metot)
+                if (url.Contains("@"))
+                    channel = await _youtube.Channels.GetByHandleAsync(url);
+                else if (url.Contains("/user/"))
+                    channel = await _youtube.Channels.GetByUserAsync(url);
+                else if (url.Contains("/c/"))
+                    channel = await _youtube.Channels.GetBySlugAsync(url);
+                else if (url.Contains("/channel/"))
+                    channel = await _youtube.Channels.GetAsync(url);
+                else
+                {
+                    var video = await _youtube.Videos.GetAsync(url);
+                    channel = await _youtube.Channels.GetAsync(video.Author.ChannelId);
+                }
+
+                // 2. Kanalın en son yüklenen "Yatay" videosunun tarihini bulma
+                DateTime? lastVideoDate = null;
+                var uploads = _youtube.Channels.GetUploadsAsync(channel.Id);
+
+                await foreach (var videoSummary in uploads)
+                {
+                    // Videonun akış (stream) bilgilerini alıyoruz
+                    var manifest = await _youtube.Videos.Streams.GetManifestAsync(videoSummary.Id);
+
+                    // En yüksek çözünürlüklü video akışını buluyoruz
+                    var videoStream = manifest.GetVideoOnlyStreams().GetWithHighestVideoQuality();
+
+                    if (videoStream != null)
+                    {
+                        // SHORTS FİLTRESİ: Eğer Genişlik > Yükseklik ise bu normal bir videodur
+                        if (videoStream.VideoResolution.Width > videoStream.VideoResolution.Height)
+                        {
+                            // Aradığımız yatay videoyu bulduk, detaylı tarih bilgisini alalım
+                            var videoDetails = await _youtube.Videos.GetAsync(videoSummary.Id);
+                            lastVideoDate = videoDetails.UploadDate.UtcDateTime; // UTC olarak alıyoruz
+
+                            break; // İlk (en güncel) yatay videoyu bulduğumuz için döngüden çıkıyoruz
+                        }
+                        // Eğer dikeyse (Shorts), döngü bir sonraki videoya geçecektir.
+                    }
+                }
+
+                return new Channel
+                {
+                    YoutubeId = channel.Id.Value,
+                    Name = channel.Title,
+                    LastVideoDate = lastVideoDate,
+                    Active = true
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Kanal eklenirken bir hata oluştu: {ex.Message}");
+            }
+        }
     }
 }
