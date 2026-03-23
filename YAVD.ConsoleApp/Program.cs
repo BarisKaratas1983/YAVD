@@ -17,7 +17,6 @@ while (true)
     if (choice == "1") await DirectDownloadMenu();
     else if (choice == "0") return;
 }
-
 async Task DirectDownloadMenu()
 {
     while (true)
@@ -34,7 +33,6 @@ async Task DirectDownloadMenu()
         else if (choice == "0") break;
     }
 }
-
 async Task HandleDirectDownload(bool isPlaylist)
 {
     using var db = new YAVDContext();
@@ -90,14 +88,12 @@ async Task HandleDirectDownload(bool isPlaylist)
     Console.WriteLine("\nİşlem bitti. Devam etmek için bir tuşa basın...");
     Console.ReadKey();
 }
-
 async Task StartSingleVideoDownload(string url, string folder, DownloadAction action, VideoResolution res, AudioQuality audio)
 {
     Console.WriteLine("Video bilgileri alınıyor...");
     var video = await ytService.GetVideoMetadataExtendedAsync(url);
     await ExecuteDownload(video.Id, video.Title, video.Author, folder, action, res, audio, 1, 1);
 }
-
 async Task StartPlaylistDownload(string url, string folder, DownloadAction action, VideoResolution res, AudioQuality audio)
 {
     Console.WriteLine("Playlist taranıyor...");
@@ -107,21 +103,18 @@ async Task StartPlaylistDownload(string url, string folder, DownloadAction actio
         await ExecuteDownload(videos[i].Id, videos[i].Title, videos[i].Author, folder, action, res, audio, i + 1, videos.Count);
     }
 }
-
 async Task ExecuteDownload(string id, string title, string author, string folder, DownloadAction action, VideoResolution res, AudioQuality audio, int current, int total)
 {
     string cleanTitle = FileNameHelper.CleanFileName(title);
 
-    // SES İNDİRME (AudioOnly veya Both ise)
     if (action == DownloadAction.AudioOnly || action == DownloadAction.Both)
     {
         string savePath = GetUniqueFilePath(folder, cleanTitle, ".mp3");
         var progress = new Progress<double>(p => DrawProgress(p, current, total, cleanTitle, ".mp3"));
         await ytService.DownloadAudioAsync(id, savePath, title, author, audio, progress);
-        Console.WriteLine(); // Progress sonrası alt satıra geç
+        Console.WriteLine();
     }
-
-    // VİDEO İNDİRME (VideoOnly veya Both ise)
+    
     if (action == DownloadAction.VideoOnly || action == DownloadAction.Both)
     {
         string savePath = GetUniqueFilePath(folder, cleanTitle, ".mp4");
@@ -130,13 +123,10 @@ async Task ExecuteDownload(string id, string title, string author, string folder
         Console.WriteLine();
     }
 }
-
 void DrawProgress(double p, int current, int total, string title, string ext)
-{
-    // \r ile satır başına dön ve tüm satırı tekrar yaz
+{ 
     Console.Write($"\r[{current}/{total}] {title}{ext} indiriliyor... %{(p * 100):0.0}   ");
 }
-
 string GetUniqueFilePath(string folder, string title, string extension)
 {
     string fullPath = Path.Combine(folder, title + extension);

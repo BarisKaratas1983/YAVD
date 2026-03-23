@@ -9,13 +9,11 @@ namespace YAVD.Core.Services
     {
         private readonly YoutubeClient _youtube;
         public YoutubeManager() => _youtube = new YoutubeClient();
-
         public async Task<(string Id, string Title, string Author)> GetVideoMetadataExtendedAsync(string videoUrl)
         {
             var video = await _youtube.Videos.GetAsync(videoUrl);
             return (video.Id.Value, video.Title, video.Author.Title);
         }
-
         public async Task<List<(string Id, string Title, string Author)>> GetPlaylistVideosExtendedAsync(string playlistUrl)
         {
             var videos = new List<(string Id, string Title, string Author)>();
@@ -26,7 +24,6 @@ namespace YAVD.Core.Services
             }
             return videos;
         }
-
         public async Task DownloadAudioAsync(string videoId, string savePath, string title, string artist, AudioQuality quality, IProgress<double>? progress = null)
         {
             GlobalFFOptions.Configure(new FFOptions { BinaryFolder = AppDomain.CurrentDomain.BaseDirectory });
@@ -37,8 +34,7 @@ namespace YAVD.Core.Services
             try
             {
                 await _youtube.Videos.Streams.DownloadAsync(streamInfo, tempAudio, progress);
-
-                // ID3v2 versiyon 3 ve doğru metadata etiketleri
+         
                 await FFMpegArguments
                     .FromFileInput(tempAudio)
                     .OutputToFile(savePath, true, options => options
