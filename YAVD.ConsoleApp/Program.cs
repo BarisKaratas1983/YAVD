@@ -22,18 +22,38 @@ while (true)
 }
 async Task DirectDownloadMenu()
 {
-    while (true)
+    Console.Clear();
+    Console.WriteLine("=== Direkt Video/Ses İndirme ===");
+    Console.Write("\nYouTube videosunun veya playlistin linkini girin: ");
+    string url = Console.ReadLine();
+
+    if (string.IsNullOrWhiteSpace(url)) return;
+
+    // Link Analizi: Playlist mi yoksa Tekil Video mu?
+    var playlistId = YoutubeExplode.Playlists.PlaylistId.TryParse(url);
+    var videoId = YoutubeExplode.Videos.VideoId.TryParse(url);
+
+    bool isPlaylist = playlistId != null;
+    bool isVideo = videoId != null;
+
+    // Eğer linkte hem video hem playlist ID'si varsa (örneğin bir playlist içinden video açılmışsa),
+    // önceliği playliste mi yoksa videoya mı vereceğimizi seçebiliriz. 
+    // Genelde kullanıcı playlist içindeyken o linki atıyorsa playlisti indirmek ister.
+    if (isPlaylist)
     {
-        Console.Clear();
-        Console.WriteLine("=== Direkt Video/Ses İndirme ===");
-        Console.WriteLine("1. Youtube Video Linkinden İndir");
-        Console.WriteLine("2. Youtube Playlist Linkinden İndir");
-        Console.WriteLine("0. Ana Menüye Dön");
-        Console.Write("\nSeçiminiz: ");
-        string choice = Console.ReadLine();
-        if (choice == "1") await HandleDirectDownload(false);
-        else if (choice == "2") await HandleDirectDownload(true);
-        else if (choice == "0") break;
+        Console.WriteLine("[TESPİT] Çalma listesi (Playlist) algılandı.");
+        await HandleDirectDownload(url, true);
+    }
+    else if (isVideo)
+    {
+        Console.WriteLine("[TESPİT] Tekil video algılandı.");
+        await HandleDirectDownload(url, false);
+    }
+    else
+    {
+        Console.WriteLine("\n[HATA] Geçersiz veya desteklenmeyen bir YouTube linki girdiniz.");
+        Console.WriteLine("Devam etmek için bir tuşa basın...");
+        Console.ReadKey();
     }
 }
 async Task ChannelsMenu()
@@ -135,9 +155,10 @@ async Task EditDeleteChannelAction()
     }
     Console.ReadKey();
 }
-async Task HandleDirectDownload(bool isPlaylist)
+async Task HandleDirectDownload(string url, bool isPlaylist)
 {
     using var db = new YAVDContext();
+    
     var dirSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadDirectory");
     string finalPath = Path.GetFullPath(dirSetting?.Value ?? ".\\Downloads");
 
@@ -149,19 +170,26 @@ async Task HandleDirectDownload(bool isPlaylist)
 
     var audioSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultAudioQuality");
     AudioQuality defaultAudio = Enum.TryParse(audioSetting?.Value, out AudioQuality q) ? q : AudioQuality.Medium;
-
-    Console.Write(isPlaylist ? "\nYoutube Playlist Linki: " : "\nYoutube Video Linki: ");
-    string url = Console.ReadLine();
-    if (string.IsNullOrWhiteSpace(url)) return;
-
+    
     Console.WriteLine($"\n[BİLGİ] Varsayılan İndirme Ayarı: {defaultAction}");
     Console.WriteLine("1) Sadece Ses, 2) Sadece Video, 3) Ses + Video");
     Console.Write("Seçiminiz (Varsayılan için ENTER): ");
     string actionInput = Console.ReadLine();
-    DownloadAction selectedAction = actionInput switch { "1" => DownloadAction.AudioOnly, "2" => DownloadAction.VideoOnly, "3" => DownloadAction.Both, _ => defaultAction };
+    DownloadAction selectedAction = actionInput switch
+    {
+        "1" => DownloadAction.AudioOnly,
+        "2" => DownloadAction.VideoOnly,
+        "3" => DownloadAction.Both,
+        _ => defaultAction
+    };
 
-    if (selectedAction == DownloadAction.None) return;
-
+    if (selectedAction == DownloadAction.None)
+    {
+        Console.WriteLine("\n[UYARI] İndirme modu 'None' olarak ayarlı. İşlem iptal edildi.");
+        Console.ReadKey();
+        return;
+    }
+    
     VideoResolution selectedRes = defaultRes;
     AudioQuality selectedAudio = defaultAudio;
 
@@ -170,7 +198,15 @@ async Task HandleDirectDownload(bool isPlaylist)
         Console.WriteLine($"\n[BİLGİ] Varsayılan Video Çözünürlüğü: {(int)defaultRes}p");
         Console.WriteLine("1) 2160p, 2) 1440p, 3) 1080p, 4) 720p, 5) 480p");
         Console.Write("Seçiminiz (ENTER = Varsayılan): ");
-        selectedRes = Console.ReadLine() switch { "1" => VideoResolution.P2160, "2" => VideoResolution.P1440, "3" => VideoResolution.P1080, "4" => VideoResolution.P720, "5" => VideoResolution.P480, _ => defaultRes };
+        selectedRes = Console.ReadLine() switch
+        {
+            "1" => VideoResolution.P2160,
+            "2" => VideoResolution.P1440,
+            "3" => VideoResolution.P1080,
+            "4" => VideoResolution.P720,
+            "5" => VideoResolution.P480,
+            _ => defaultRes
+        };
     }
 
     if (selectedAction != DownloadAction.VideoOnly)
@@ -178,16 +214,32 @@ async Task HandleDirectDownload(bool isPlaylist)
         Console.WriteLine($"\n[BİLGİ] Varsayılan Ses Kalitesi: {(int)defaultAudio}kbps");
         Console.WriteLine("1) 320kbps, 2) 256kbps, 3) 192kbps, 4) 128kbps");
         Console.Write("Seçiminiz (ENTER = Varsayılan): ");
-        selectedAudio = Console.ReadLine() switch { "1" => AudioQuality.Ultra, "2" => AudioQuality.High, "3" => AudioQuality.Medium, "4" => AudioQuality.Low, _ => defaultAudio };
+        selectedAudio = Console.ReadLine() switch
+        {
+            "1" => AudioQuality.Ultra,
+            "2" => AudioQuality.High,
+            "3" => AudioQuality.Medium,
+            "4" => AudioQuality.Low,
+            _ => defaultAudio
+        };
     }
-
-    Console.WriteLine($"\n[BİLGİ] Dosyalar şu klasöre kaydedilecek: {finalPath}");
+    
+    Console.WriteLine($"\n[BİLGİ] Kayıt Klasörü: {finalPath}");
     if (!Directory.Exists(finalPath)) Directory.CreateDirectory(finalPath);
 
-    if (isPlaylist) await StartPlaylistDownload(url, finalPath, selectedAction, selectedRes, selectedAudio);
-    else await StartSingleVideoDownload(url, finalPath, selectedAction, selectedRes, selectedAudio);
+    try
+    {
+        if (isPlaylist)
+            await StartPlaylistDownload(url, finalPath, selectedAction, selectedRes, selectedAudio);
+        else
+            await StartSingleVideoDownload(url, finalPath, selectedAction, selectedRes, selectedAudio);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"\n[HATA] Bir sorun oluştu: {ex.Message}");
+    }
 
-    Console.WriteLine("\nİşlem bitti. Devam etmek için bir tuşa basın...");
+    Console.WriteLine("\nİşlem tamamlandı. Devam etmek için bir tuşa basın...");
     Console.ReadKey();
 }
 async Task StartSingleVideoDownload(string url, string folder, DownloadAction action, VideoResolution res, AudioQuality audio)
