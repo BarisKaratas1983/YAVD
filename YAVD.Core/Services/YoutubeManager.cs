@@ -9,18 +9,20 @@ namespace YAVD.Core.Services
     {
         private readonly YoutubeClient _youtube;
         public YoutubeManager() => _youtube = new YoutubeClient();
-        public async Task<(string Id, string Title, string Author)> GetVideoMetadataExtendedAsync(string videoUrl)
+        public async Task<(string Id, string Title, string Author, DateTime UploadDate)> GetVideoMetadataExtendedAsync(string videoUrl)
         {
             var video = await _youtube.Videos.GetAsync(videoUrl);
-            return (video.Id.Value, video.Title, video.Author.Title);
+            return (video.Id.Value, video.Title, video.Author.Title, video.UploadDate.UtcDateTime);
         }
-        public async Task<List<(string Id, string Title, string Author)>> GetPlaylistVideosExtendedAsync(string playlistUrl)
+        public async Task<List<(string Id, string Title, string Author, DateTime UploadDate)>> GetPlaylistVideosExtendedAsync(string playlistUrl)
         {
-            var videos = new List<(string Id, string Title, string Author)>();
+            var videos = new List<(string Id, string Title, string Author, DateTime UploadDate)>();
             var playlistVideos = _youtube.Playlists.GetVideosAsync(playlistUrl);
+            
             await foreach (var video in playlistVideos)
             {
-                videos.Add((video.Id.Value, video.Title, video.Author.Title));
+                var videoForUploadDate = await _youtube.Videos.GetAsync(video.Url);
+                videos.Add((video.Id.Value, video.Title, video.Author.Title, videoForUploadDate.UploadDate.UtcDateTime));
             }
             return videos;
         }
@@ -34,7 +36,7 @@ namespace YAVD.Core.Services
             try
             {
                 await _youtube.Videos.Streams.DownloadAsync(streamInfo, tempAudio, progress);
-         
+
                 await FFMpegArguments
                     .FromFileInput(tempAudio)
                     .OutputToFile(savePath, true, options => options
@@ -77,51 +79,48 @@ namespace YAVD.Core.Services
                 if (File.Exists(tempAudio)) File.Delete(tempAudio);
             }
         }
-        public async Task<Channel> GetChannelMetadataAsync(string url)
+        public async Task<Channel> GetChannelMetadataAsync(string url, bool includeShorts)
         {
             YoutubeExplode.Channels.Channel channel;
 
             try
             {
-                // 1. URL tipine göre kanalı bul (Daha önce konuştuğumuz 4 farklı metot)
-                if (url.Contains("@"))
-                    channel = await _youtube.Channels.GetByHandleAsync(url);
-                else if (url.Contains("/user/"))
-                    channel = await _youtube.Channels.GetByUserAsync(url);
-                else if (url.Contains("/c/"))
-                    channel = await _youtube.Channels.GetBySlugAsync(url);
-                else if (url.Contains("/channel/"))
-                    channel = await _youtube.Channels.GetAsync(url);
+                if (url.Contains("@")) channel = await _youtube.Channels.GetByHandleAsync(url);
+                else if (url.Contains("/user/")) channel = await _youtube.Channels.GetByUserAsync(url);
+                else if (url.Contains("/c/")) channel = await _youtube.Channels.GetBySlugAsync(url);
+                else if (url.Contains("/channel/")) channel = await _youtube.Channels.GetAsync(url);
                 else
                 {
                     var video = await _youtube.Videos.GetAsync(url);
                     channel = await _youtube.Channels.GetAsync(video.Author.ChannelId);
                 }
 
-                // 2. Kanalın en son yüklenen "Yatay" videosunun tarihini bulma
                 DateTime? lastVideoDate = null;
                 var uploads = _youtube.Channels.GetUploadsAsync(channel.Id);
 
                 await foreach (var videoSummary in uploads)
                 {
-                    // Videonun akış (stream) bilgilerini alıyoruz
-                    var manifest = await _youtube.Videos.Streams.GetManifestAsync(videoSummary.Id);
+                    if (includeShorts)
+                    {
+                        var videoDetails = await _youtube.Videos.GetAsync(videoSummary.Id);
+                        lastVideoDate = videoDetails.UploadDate.UtcDateTime;
+                        break;
+                    }
 
-                    // En yüksek çözünürlüklü video akışını buluyoruz
+                    var videoDetailsDetailed = await _youtube.Videos.GetAsync(videoSummary.Id);
+                    var manifest = await _youtube.Videos.Streams.GetManifestAsync(videoSummary.Id);
                     var videoStream = manifest.GetVideoOnlyStreams().GetWithHighestVideoQuality();
 
                     if (videoStream != null)
                     {
-                        // SHORTS FİLTRESİ: Eğer Genişlik > Yükseklik ise bu normal bir videodur
-                        if (videoStream.VideoResolution.Width > videoStream.VideoResolution.Height)
-                        {
-                            // Aradığımız yatay videoyu bulduk, detaylı tarih bilgisini alalım
-                            var videoDetails = await _youtube.Videos.GetAsync(videoSummary.Id);
-                            lastVideoDate = videoDetails.UploadDate.UtcDateTime; // UTC olarak alıyoruz
+                        bool isShort = videoDetailsDetailed.Duration <= TimeSpan.FromMinutes(3) &&
+                                       videoStream.VideoResolution.Width < videoStream.VideoResolution.Height;
 
-                            break; // İlk (en güncel) yatay videoyu bulduğumuz için döngüden çıkıyoruz
+                        if (!isShort)
+                        {
+                            lastVideoDate = videoDetailsDetailed.UploadDate.UtcDateTime;
+                            break;
                         }
-                        // Eğer dikeyse (Shorts), döngü bir sonraki videoya geçecektir.
                     }
                 }
 
@@ -135,7 +134,7 @@ namespace YAVD.Core.Services
             }
             catch (Exception ex)
             {
-                throw new Exception($"Kanal eklenirken bir hata oluştu: {ex.Message}");
+                throw new Exception($"Kanal eklenirken hata: {ex.Message}");
             }
         }
     }

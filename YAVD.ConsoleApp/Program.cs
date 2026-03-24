@@ -11,13 +11,13 @@ while (true)
     Console.Clear();
     Console.WriteLine("=== YAVD: Youtube Audio Video Downloader ===");
     Console.WriteLine("1. Direkt Video/Ses İndir");
-    Console.WriteLine("2. Kanallar"); // Yeni eklenen
+    Console.WriteLine("2. Kanallar");
     Console.WriteLine("0. Çıkış");
     Console.Write("\nSeçiminiz: ");
     string choice = Console.ReadLine();
 
     if (choice == "1") await DirectDownloadMenu();
-    else if (choice == "2") await ChannelsMenu(); // Yeni metod
+    else if (choice == "2") await ChannelsMenu();
     else if (choice == "0") return;
 }
 async Task DirectDownloadMenu()
@@ -63,10 +63,15 @@ async Task AddChannelAction()
 
     try
     {
-        Console.WriteLine("Kanal bilgileri alınıyor...");
-        var channelMetadata = await ytService.GetChannelMetadataAsync(url);
-
         using var db = new YAVDContext();
+
+        var setting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "IncludeShorts");
+        bool includeShorts = setting?.Value?.ToLower() == "true" || setting?.Value == "1";
+
+        Console.WriteLine("Kanal bilgileri ve son video tarihi analiz ediliyor...");
+        
+        var channelMetadata = await ytService.GetChannelMetadataAsync(url, includeShorts);
+
         if (await db.Channels.AnyAsync(c => c.YoutubeId == channelMetadata.YoutubeId))
         {
             Console.WriteLine("\n[UYARI] Bu kanal zaten kayıtlı!");
@@ -76,9 +81,10 @@ async Task AddChannelAction()
             db.Channels.Add(channelMetadata);
             await db.SaveChangesAsync();
             Console.WriteLine($"\n[BAŞARILI] {channelMetadata.Name} kanalı eklendi.");
+            Console.WriteLine($"[BİLGİ] Takip başlangıç tarihi: {channelMetadata.LastVideoDate}");
         }
     }
-    catch (Exception ex) { Console.WriteLine($"Hata: {ex.Message}"); }
+    catch (Exception ex) { Console.WriteLine($"\n[HATA] {ex.Message}"); }
 
     Console.WriteLine("\nDevam etmek için bir tuşa basın...");
     Console.ReadKey();
@@ -188,7 +194,7 @@ async Task StartSingleVideoDownload(string url, string folder, DownloadAction ac
 {
     Console.WriteLine("Video bilgileri alınıyor...");
     var video = await ytService.GetVideoMetadataExtendedAsync(url);
-    await ExecuteDownload(video.Id, video.Title, video.Author, folder, action, res, audio, 1, 1);
+    await ExecuteDownload(video.Id, video.Title, video.Author, video.UploadDate, folder, action, res, audio, 1, 1);
 }
 async Task StartPlaylistDownload(string url, string folder, DownloadAction action, VideoResolution res, AudioQuality audio)
 {
@@ -196,37 +202,73 @@ async Task StartPlaylistDownload(string url, string folder, DownloadAction actio
     var videos = await ytService.GetPlaylistVideosExtendedAsync(url);
     for (int i = 0; i < videos.Count; i++)
     {
-        await ExecuteDownload(videos[i].Id, videos[i].Title, videos[i].Author, folder, action, res, audio, i + 1, videos.Count);
+        await ExecuteDownload(videos[i].Id, videos[i].Title, videos[i].Author, videos[i].UploadDate, folder, action, res, audio, i + 1, videos.Count);
     }
 }
-async Task ExecuteDownload(string id, string title, string author, string folder, DownloadAction action, VideoResolution res, AudioQuality audio, int current, int total)
+async Task ExecuteDownload(string id, string title, string author, DateTime publishedAt, string folder, DownloadAction action, VideoResolution res, AudioQuality audio, int current, int total)
 {
-    string cleanTitle = FileNameHelper.CleanFileName(title);
+    using var db = new YAVDContext();
+
+    var tags = new Dictionary<string, string>
+    {
+        { FileFormatTags.Title, title },
+        { FileFormatTags.Channel, author },
+        { FileFormatTags.Id, id },
+        { FileFormatTags.Date, publishedAt.ToString("yyyy-MM-dd") },
+        { FileFormatTags.Year, publishedAt.Year.ToString() },
+        { FileFormatTags.DateTime, publishedAt.ToString("yyyy-MM-dd_HH-mm") },
+        { FileFormatTags.Index, total > 1 ? current.ToString("D2") : "" }
+    };
 
     if (action == DownloadAction.AudioOnly || action == DownloadAction.Both)
     {
-        string savePath = GetUniqueFilePath(folder, cleanTitle, ".mp3");
-        var progress = new Progress<double>(p => DrawProgress(p, current, total, cleanTitle, ".mp3"));
+        var formatSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "SaveFileFormatAudio");
+        string pattern = formatSetting?.Value ?? "[TITLE]";
+
+        tags[FileFormatTags.Kbps] = ((int)audio).ToString() + "kbps";
+
+        string fileName = FileNameHelper.BuildFileName(pattern, tags, ".mp3");
+        string savePath = GetUniqueFilePath(folder, fileName);
+
+        var progress = new Progress<double>(p => DrawProgress(p, current, total, fileName));
         await ytService.DownloadAudioAsync(id, savePath, title, author, audio, progress);
         Console.WriteLine();
     }
-    
+
     if (action == DownloadAction.VideoOnly || action == DownloadAction.Both)
     {
-        string savePath = GetUniqueFilePath(folder, cleanTitle, ".mp4");
-        var progress = new Progress<double>(p => DrawProgress(p, current, total, cleanTitle, ".mp4"));
+        var formatSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "SaveFileFormatVideo");
+        string pattern = formatSetting?.Value ?? "[TITLE]";
+
+        tags[FileFormatTags.Resolution] = (int)res + "p";
+
+        string fileName = FileNameHelper.BuildFileName(pattern, tags, ".mp4");
+        string savePath = GetUniqueFilePath(folder, fileName);
+
+        var progress = new Progress<double>(p => DrawProgress(p, current, total, fileName));
         await ytService.DownloadVideoWithFFmpegAsync(id, savePath, res, progress);
         Console.WriteLine();
     }
 }
-void DrawProgress(double p, int current, int total, string title, string ext)
-{ 
-    Console.Write($"\r[{current}/{total}] {title}{ext} indiriliyor... %{(p * 100):0.0}   ");
-}
-string GetUniqueFilePath(string folder, string title, string extension)
+void DrawProgress(double p, int current, int total, string fileName)
 {
-    string fullPath = Path.Combine(folder, title + extension);
+    Console.Write($"\r[{current}/{total}] {fileName} indiriliyor... %{(p * 100):0.0}   ");
+}
+string GetUniqueFilePath(string folder, string fileNameWithExtension)
+{
+    string fullPath = Path.Combine(folder, fileNameWithExtension);
+
+    if (!File.Exists(fullPath)) return fullPath;
+
+    string fileNameOnly = Path.GetFileNameWithoutExtension(fileNameWithExtension);
+    string extension = Path.GetExtension(fileNameWithExtension);
     int counter = 2;
-    while (File.Exists(fullPath)) { fullPath = Path.Combine(folder, $"{title} ({counter}){extension}"); counter++; }
+
+    while (File.Exists(fullPath))
+    {
+        string newName = $"{fileNameOnly} ({counter}){extension}";
+        fullPath = Path.Combine(folder, newName);
+        counter++;
+    }
     return fullPath;
 }
