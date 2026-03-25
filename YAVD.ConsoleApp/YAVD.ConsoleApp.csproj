@@ -11,10 +11,4 @@
     <ProjectReference Include="..\YAVD.Core\YAVD.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="yavd_database.db">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

@@ -1,19 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FFMpegCore" Version="5.4.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.14">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.14" />
-    <PackageReference Include="YoutubeExplode" Version="6.5.7" />
-  </ItemGroup>
-
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="FFMpegCore" Version="5.4.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.14">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.14" />
+		<PackageReference Include="YoutubeExplode" Version="6.5.7" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Update="YAVD.db">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
 </Project>

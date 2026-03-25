@@ -15,7 +15,7 @@ namespace YAVD.Core.Data
         public DbSet<AppSetting> AppSettings { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("Data Source=yavd_database.db");
+            optionsBuilder.UseSqlite("Data Source=YAVD.db");
         }
     }
 }

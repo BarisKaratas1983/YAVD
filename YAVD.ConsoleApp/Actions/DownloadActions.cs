@@ -9,11 +9,10 @@ namespace YAVD.ConsoleApp.Actions
     public static class DownloadActions
     {
         private static readonly YoutubeManager _ytService = new YoutubeManager();
-
         public static async Task HandleDirectDownload(string url, bool isPlaylist)
         {
             using var db = new YAVDContext();
-            
+
             var dirSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadDirectory");
             string finalPath = Path.GetFullPath(dirSetting?.Value ?? ".\\Downloads");
 
@@ -25,7 +24,7 @@ namespace YAVD.ConsoleApp.Actions
 
             var audioSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultAudioQuality");
             AudioQuality defaultAudio = Enum.TryParse(audioSetting?.Value, out AudioQuality q) ? q : AudioQuality.Medium;
-            
+
             Console.WriteLine($"\n[BİLGİ] Varsayılan İndirme Ayarı: {defaultAction}");
             Console.WriteLine("1) Sadece Ses, 2) Sadece Video, 3) Ses + Video");
             Console.Write("Seçiminiz (Varsayılan için ENTER): ");
@@ -55,8 +54,22 @@ namespace YAVD.ConsoleApp.Actions
 
             if (!Directory.Exists(finalPath)) Directory.CreateDirectory(finalPath);
 
-            if (isPlaylist) await StartPlaylistDownload(url, finalPath, selectedAction, selectedRes, selectedAudio);
-            else await StartSingleVideoDownload(url, finalPath, selectedAction, selectedRes, selectedAudio);
+            try
+            {
+                if (isPlaylist)
+                    await StartPlaylistDownload(url, finalPath, selectedAction, selectedRes, selectedAudio);
+                else
+                    await StartSingleVideoDownload(url, finalPath, selectedAction, selectedRes, selectedAudio);
+
+                Console.WriteLine("\n\n[TAMAMLANDI] Tüm indirme işlemleri başarıyla bitti.");
+                Console.WriteLine($"Dosyalar şurada: {finalPath}");
+                ChannelActions.WaitForKey();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\n[HATA] Bir sorun oluştu: {ex.Message}");
+                ChannelActions.WaitForKey();
+            }
         }
         private static async Task StartSingleVideoDownload(string url, string folder, DownloadAction action, VideoResolution res, AudioQuality audio)
         {
@@ -97,9 +110,10 @@ namespace YAVD.ConsoleApp.Actions
                 string fileName = FileNameHelper.BuildFileName(pattern, tags, ".mp3");
                 string savePath = FileNameHelper.GetUniqueFilePath(folder, fileName);
 
-                var progress = new Progress<double>(p => DrawProgress(p, current, total, fileName));
+                var progress = new Progress<double>(p => DrawProgress(p, current, total));
                 await _ytService.DownloadAudioAsync(id, savePath, title, author, audio, progress);
-                Console.WriteLine();
+
+                Console.WriteLine($"\r[{current}/{total}] SES: {fileName} -> TAMAMLANDI.   ");
             }
 
             if (action == DownloadAction.VideoOnly || action == DownloadAction.Both)
@@ -111,14 +125,15 @@ namespace YAVD.ConsoleApp.Actions
                 string fileName = FileNameHelper.BuildFileName(pattern, tags, ".mp4");
                 string savePath = FileNameHelper.GetUniqueFilePath(folder, fileName);
 
-                var progress = new Progress<double>(p => DrawProgress(p, current, total, fileName));
+                var progress = new Progress<double>(p => DrawProgress(p, current, total));
                 await _ytService.DownloadVideoWithFFmpegAsync(id, savePath, res, progress);
-                Console.WriteLine();
+
+                Console.WriteLine($"\r[{current}/{total}] VİDEO: {fileName} -> TAMAMLANDI. ");
             }
         }
-        private static void DrawProgress(double p, int current, int total, string fileName)
+        private static void DrawProgress(double p, int current, int total)
         {
-            Console.Write($"\r[{current}/{total}] {fileName} indiriliyor... %{(p * 100):0.0}   ");
+            Console.Write($"\r[{current}/{total}] İndiriliyor... %{(p * 100):0.0}      ");
         }
     }
 }
