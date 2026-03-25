@@ -24,7 +24,6 @@ namespace YAVD.Core.Helpers
 
             return fileName + extension;
         }
-
         public static string CleanFileName(string fileName)
         {
             string invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
@@ -33,6 +32,24 @@ namespace YAVD.Core.Helpers
             fileName = Regex.Replace(fileName, invalidRegStr, " ");
 
             return Regex.Replace(fileName, @"\s+", " ").Trim();
+        }
+        public static string GetUniqueFilePath(string folder, string fileNameWithExtension)
+        {
+            string fullPath = Path.Combine(folder, fileNameWithExtension);
+
+            if (!File.Exists(fullPath)) return fullPath;
+
+            string fileNameOnly = Path.GetFileNameWithoutExtension(fileNameWithExtension);
+            string extension = Path.GetExtension(fileNameWithExtension);
+            int counter = 2;
+
+            while (File.Exists(fullPath))
+            {
+                string newName = $"{fileNameOnly} ({counter}){extension}";
+                fullPath = Path.Combine(folder, newName);
+                counter++;
+            }
+            return fullPath;
         }
     }
 }

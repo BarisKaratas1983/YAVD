@@ -46,7 +46,6 @@ namespace YAVD.Core.Services
             }
             finally { if (File.Exists(tempAudio)) File.Delete(tempAudio); }
         }
-
         public async Task DownloadVideoWithFFmpegAsync(string videoId, string savePath, VideoResolution targetRes, IProgress<double>? progress = null)
         {
             GlobalFFOptions.Configure(new FFOptions { BinaryFolder = AppDomain.CurrentDomain.BaseDirectory });
