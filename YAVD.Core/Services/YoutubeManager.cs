@@ -136,5 +136,38 @@ namespace YAVD.Core.Services
                 throw new Exception($"Kanal eklenirken hata: {ex.Message}");
             }
         }
+        public async Task<List<(string Id, string Title, DateTime UploadDate)>> GetNewVideosFromChannelAsync(string channelId, DateTime? lastVideoDate, bool includeShorts)
+        {
+            var newVideos = new List<(string Id, string Title, DateTime UploadDate)>();
+            
+            var uploads = _youtube.Channels.GetUploadsAsync(channelId);
+
+            await foreach (var videoSummary in uploads)
+            {
+                var videoDetails = await _youtube.Videos.GetAsync(videoSummary.Id);
+                var uploadDate = videoDetails.UploadDate.UtcDateTime;
+
+                if (lastVideoDate.HasValue && uploadDate <= lastVideoDate.Value)
+                    break;                
+                
+                if (!includeShorts)
+                {                    
+                    var manifest = await _youtube.Videos.Streams.GetManifestAsync(videoSummary.Id);
+                    var videoStream = manifest.GetVideoOnlyStreams().GetWithHighestVideoQuality();
+
+                    if (videoStream != null)
+                    {                        
+                        bool isShort = videoDetails.Duration <= TimeSpan.FromMinutes(3) &&
+                                       videoStream.VideoResolution.Width < videoStream.VideoResolution.Height;
+
+                        if (isShort) continue;
+                    }
+                }
+                
+                newVideos.Add((videoSummary.Id.Value, videoSummary.Title, uploadDate));
+            }
+            
+            return newVideos.OrderBy(v => v.UploadDate).ToList();
+        }
     }
 }

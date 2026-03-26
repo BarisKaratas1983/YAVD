@@ -32,7 +32,7 @@ namespace YAVD.ConsoleApp.Menus
                 Console.WriteLine("\n[HATA] Geçersiz YouTube linki!");
                 ChannelActions.WaitForKey();
             }
-        }        
+        }
         public static async Task ChannelsMenu()
         {
             while (true)
@@ -41,7 +41,7 @@ namespace YAVD.ConsoleApp.Menus
                 Console.WriteLine("=== Kanal Yönetimi ===");
                 Console.WriteLine("1) Kanal Ekle/Düzenle/Sil");
                 Console.WriteLine("2) Kanal Listesi");
-                Console.WriteLine("3) Kanalların Videolarını Kontrol Et (Yakında)");
+                Console.WriteLine("3) Kanalların Videolarını Kontrol Et");
                 Console.WriteLine("0) Ana Menüye Dön");
                 Console.Write("\nSeçiminiz: ");
                 string choice = Console.ReadLine();
@@ -54,6 +54,41 @@ namespace YAVD.ConsoleApp.Menus
                     {
                         ChannelActions.PrintChannels(list);
                         ChannelActions.WaitForKey();
+                    }
+                }
+                else if (choice == "3") await CheckVideosMenu();
+                else if (choice == "0") break;
+            }
+        }
+        private static async Task CheckVideosMenu()
+        {
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine("=== Kanalların Videolarını Kontrol Et ===");
+                Console.WriteLine("1) Bütün Kanalları Kontrol Et");
+                Console.WriteLine("2) Belirli Bir Kanalı Kontrol Et");
+                Console.WriteLine("0) Bir Önceki Menüye Dön");
+                Console.Write("\nSeçiminiz: ");
+                string choice = Console.ReadLine();
+
+                if (choice == "1")
+                {
+                    await ChannelActions.ScanChannelsAction();
+                }
+                else if (choice == "2")
+                {
+                    var channels = await ChannelActions.GetChannelsOrWarn("Tarama");
+                    if (channels != null)
+                    {
+                        ChannelActions.PrintChannels(channels);
+                        Console.Write("\nKontrol etmek istediğiniz kanalın Id değeri (0 : İptal): ");
+
+                        string input = Console.ReadLine();
+                        if (int.TryParse(input, out int id) && id != 0)
+                        {
+                            await ChannelActions.ScanChannelsAction(id);
+                        }
                     }
                 }
                 else if (choice == "0") break;

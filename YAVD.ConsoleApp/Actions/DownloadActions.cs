@@ -17,7 +17,7 @@ namespace YAVD.ConsoleApp.Actions
             string finalPath = Path.GetFullPath(dirSetting?.Value ?? ".\\Downloads");
 
             var actionSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadAction");
-            DownloadAction defaultAction = Enum.TryParse(actionSetting?.Value, out DownloadAction a) ? a : DownloadAction.None;
+            DownloadAction defaultAction = Enum.TryParse(actionSetting?.Value, out DownloadAction a) ? a : DownloadAction.AudioOnly;
 
             var resSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultVideoResolution");
             VideoResolution defaultRes = Enum.TryParse(resSetting?.Value, out VideoResolution r) ? r : VideoResolution.P1080;
@@ -29,9 +29,7 @@ namespace YAVD.ConsoleApp.Actions
             Console.WriteLine("1) Sadece Ses, 2) Sadece Video, 3) Ses + Video");
             Console.Write("Seçiminiz (Varsayılan için ENTER): ");
             string actionInput = Console.ReadLine();
-            DownloadAction selectedAction = actionInput switch { "1" => DownloadAction.AudioOnly, "2" => DownloadAction.VideoOnly, "3" => DownloadAction.Both, _ => defaultAction };
-
-            if (selectedAction == DownloadAction.None) return;
+            DownloadAction selectedAction = actionInput switch { "1" => DownloadAction.AudioOnly, "2" => DownloadAction.VideoOnly, "3" => DownloadAction.Both, _ => defaultAction };            
 
             VideoResolution selectedRes = defaultRes;
             AudioQuality selectedAudio = defaultAudio;
