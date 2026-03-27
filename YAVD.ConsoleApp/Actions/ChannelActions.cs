@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using YAVD.Core.Data;
+using YAVD.Core.Helpers;
 using YAVD.Core.Models;
 using YAVD.Core.Services;
 
@@ -30,15 +31,15 @@ namespace YAVD.ConsoleApp.Actions
         {
             Console.Clear();
             Console.WriteLine("=== Kayıtlı Kanallar ===");
-            Console.WriteLine("{0,-5} {1,-30} {2,-10}", "ID", "Kanal Adı", "Durum");
-            Console.WriteLine(new string('-', 50));
+            Console.WriteLine("{0,-5} {1,-30} {2,-10} {3,-20}", "ID", "Kanal Adı", "Durum", "Son Video Tarihi");
+            Console.WriteLine(new string('-', 65));
 
             foreach (var c in channels)
-            {
+            {                
                 string status = c.Active ? "AKTİF" : "PASİF";
-                Console.WriteLine("{0,-5} {1,-30} {2,-10}", c.Id, c.Name, status);
+                Console.WriteLine("{0,-5} {1,-30} {2,-10} {3,-20}", c.Id, c.Name, status, c.LastVideoDate);
             }
-            Console.WriteLine(new string('-', 50));
+            Console.WriteLine(new string('-', 65));
         }        
         public static async Task AddChannel()
         {
@@ -141,84 +142,81 @@ namespace YAVD.ConsoleApp.Actions
             VideoResolution defaultRes = Enum.TryParse(resSetting?.Value, out VideoResolution r) ? r : VideoResolution.P1080;
             AudioQuality defaultAudio = Enum.TryParse(audioSetting?.Value, out AudioQuality q) ? q : AudioQuality.Medium;
             string downloadFolder = Path.GetFullPath(dirSetting?.Value ?? ".\\Downloads");
-                        
-            IQueryable<Channel> query = db.Channels.Where(c => c.Active);
-            if (specificChannelId.HasValue)
-                query = query.Where(c => c.Id == specificChannelId.Value);
 
-            var channelsToScan = await query.ToListAsync();
-
-            if (!channelsToScan.Any())
-            {
-                Console.WriteLine("\n[UYARI] Taranacak aktif kanal bulunamadı.");
-                WaitForKey();
-                return;
-            }
             Console.Clear();
-            Console.WriteLine($"=== Kanal Tarama Başlatıldı: {DateTime.Now} ===");
-            Console.WriteLine($"En Son Tarama Tarihi: {lastCheckedSetting?.Value ?? "Null (İlk Kullanım)"}");
+            Console.WriteLine("=== Kanal Tarama Konfigürasyonu ===");
+            Console.WriteLine($"Hedef Klasör  : {downloadFolder}");
+            Console.WriteLine($"İşlem Tipi    : {defaultAction}");
+            if (defaultAction != DownloadAction.AudioOnly) Console.WriteLine($"Video Kalite  : {defaultRes}p");
+            if (defaultAction != DownloadAction.VideoOnly) Console.WriteLine($"Ses Kalite    : {defaultAudio}kbps");
+            Console.WriteLine($"Shorts Dahil  : {(includeShorts ? "Evet" : "Hayır")}");
+            Console.WriteLine($"Son Tarama    : {lastCheckedSetting?.Value ?? "Null"}");
             Console.WriteLine(new string('-', 60));
-
-            int totalNewVideosCount = 0;
-
-            foreach (var channel in channelsToScan)
+            
+            if (!Directory.Exists(downloadFolder))
             {
-                Console.Write($"\r[*] {channel.Name} taranıyor...                                ");
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write("\n[UYARI] Klasör bulunamadı. Oluşturulsun mu? (E/H): ");
+                Console.ResetColor();
+                if (Console.ReadLine()?.ToLower() == "e") Directory.CreateDirectory(downloadFolder);
+                else return;
+            }
+            
+            var query = db.Channels.Where(c => c.Active);
+            if (specificChannelId.HasValue) query = query.Where(c => c.Id == specificChannelId.Value);
+            var channels = await query.ToListAsync();
 
-                try
+            int totalProcessedVideos = 0;
+
+            foreach (var channel in channels)
+            {
+                Console.WriteLine($"\r[*] {channel.Name} taranıyor...");
+                var newVideos = await _ytService.GetNewVideosFromChannelAsync(channel.YoutubeId, channel.LastVideoDate, includeShorts);
+
+                if (newVideos.Any())
                 {                    
-                    var newVideos = await _ytService.GetNewVideosFromChannelAsync(channel.YoutubeId, channel.LastVideoDate, includeShorts);
-
-                    if (newVideos.Any())
+                    for (int j = 0; j < newVideos.Count; j++)
                     {
-                        Console.WriteLine($"\r[+] {channel.Name}: {newVideos.Count} adet yeni video bulundu.");
+                        var v = newVideos[j];
+                        
+                        var existingVideo = await db.Videos.FirstOrDefaultAsync(x => x.YoutubeId == v.Id);
+                        bool shouldDownload = true;
 
-                        foreach (var videoInfo in newVideos)
+                        if (existingVideo != null && existingVideo.IsDownloaded)
+                        {                            
+                            string checkExt = defaultAction == DownloadAction.AudioOnly ? ".mp3" : ".mp4";
+                            string expectedFileName = FileNameHelper.CleanFileName(v.Title) + checkExt; // Basit bir kontrol
+                            string checkPath = Path.Combine(downloadFolder, expectedFileName);
+                            
+                            if (File.Exists(checkPath))
+                            {
+                                shouldDownload = false;
+                                Console.WriteLine($"\r[{j + 1}/{newVideos.Count}] Atlanıyor: {v.Title} (Zaten mevcut)");
+                            }
+                        }
+
+                        if (shouldDownload)
                         {
                             try
                             {                                
-                                var videoRecord = new Video
-                                {
-                                    YoutubeId = videoInfo.Id,
-                                    Title = videoInfo.Title,
-                                    PublishedAt = videoInfo.UploadDate,
-                                    ChannelId = channel.Id,
-                                    IsDownloaded = false
-                                };
-                                db.Videos.Add(videoRecord);
-                                await db.SaveChangesAsync();
-                                
-                                await DownloadActions.ExecuteDownload(
-                                    videoInfo.Id,
-                                    videoInfo.Title,
-                                    channel.Name,
-                                    videoInfo.UploadDate,
-                                    downloadFolder,
-                                    defaultAction,
-                                    defaultRes,
-                                    defaultAudio,
-                                    1, 1);
-                                
-                                videoRecord.IsDownloaded = true;
-                                channel.LastVideoDate = videoInfo.UploadDate; // Kanal tarihini güncelle
-                                await db.SaveChangesAsync();
+                                var videoRecord = existingVideo ?? new Video { YoutubeId = v.Id, ChannelId = channel.Id };
+                                videoRecord.Title = v.Title;
+                                videoRecord.PublishedAt = v.UploadDate;
+                                videoRecord.IsDownloaded = false;
 
-                                totalNewVideosCount++;
+                                if (existingVideo == null) db.Videos.Add(videoRecord);
+                                await db.SaveChangesAsync();
+                                
+                                await DownloadActions.ExecuteDownload(v.Id, v.Title, channel.Name, v.UploadDate, downloadFolder, defaultAction, defaultRes, defaultAudio, j + 1, newVideos.Count);
+
+                                videoRecord.IsDownloaded = true;
+                                channel.LastVideoDate = v.UploadDate;
+                                await db.SaveChangesAsync();
+                                totalProcessedVideos++;
                             }
-                            catch (Exception ex)
-                            {                                
-                                Console.WriteLine($"\n[HATA] Video indirilemedi ({videoInfo.Title}): {ex.Message}");
-                            }
+                            catch (Exception ex) { Console.WriteLine($"\n[HATA] {v.Title}: {ex.Message}"); }
                         }
                     }
-                    else
-                    {
-                        Console.WriteLine($"\r[-] {channel.Name}: Yeni video yok.                        ");
-                    }
-                }
-                catch (Exception ex)
-                {                    
-                    Console.WriteLine($"\n[HATA] {channel.Name} kanalı taranırken hata oluştu: {ex.Message}");
                 }
             }
 
@@ -230,7 +228,7 @@ namespace YAVD.ConsoleApp.Actions
             await db.SaveChangesAsync();
 
             Console.WriteLine(new string('-', 60));
-            Console.WriteLine($"[TAMAMLANDI] Toplam {totalNewVideosCount} yeni video işlendi.");
+            Console.WriteLine($"[TAMAMLANDI]");
             WaitForKey();
         }
     }

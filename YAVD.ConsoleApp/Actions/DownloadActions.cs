@@ -16,6 +16,34 @@ namespace YAVD.ConsoleApp.Actions
             var dirSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadDirectory");
             string finalPath = Path.GetFullPath(dirSetting?.Value ?? ".\\Downloads");
 
+            var dirCheck = SystemValidator.ValidateDirectory(finalPath);
+            if (!dirCheck.IsSuccess)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"\n[BİLGİ] Hedef klasör bulunamadı: {finalPath}");
+                Console.Write("Bu klasör otomatik olarak oluşturulsun mu? (E/H): ");
+                Console.ResetColor();
+
+                string answer = Console.ReadLine();
+                if (answer?.Equals("e", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    var createResult = SystemValidator.ValidateDirectory(finalPath, autoCreate: true);
+                    if (!createResult.IsSuccess)
+                    {
+                        Console.WriteLine($"\n[HATA] Klasör oluşturulamadı: {createResult.Message}");
+                        ChannelActions.WaitForKey();
+                        return;
+                    }
+                    Console.WriteLine("[BAŞARILI] Klasör oluşturuldu.");
+                }
+                else
+                {
+                    Console.WriteLine("\n[İPTAL] Klasör mevcut olmadığı için işleme devam edilemiyor.");
+                    ChannelActions.WaitForKey();
+                    return;
+                }
+            }
+
             var actionSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadAction");
             DownloadAction defaultAction = Enum.TryParse(actionSetting?.Value, out DownloadAction a) ? a : DownloadAction.AudioOnly;
 
@@ -111,6 +139,7 @@ namespace YAVD.ConsoleApp.Actions
                 var progress = new Progress<double>(p => DrawProgress(p, current, total));
                 await _ytService.DownloadAudioAsync(id, savePath, title, author, audio, progress);
 
+                Console.Write($"\r[{current}/{total}] SES: Dosya hazırlanıyor ve etiketleniyor...   ");
                 Console.WriteLine($"\r[{current}/{total}] SES: {fileName} -> TAMAMLANDI.   ");
             }
 
@@ -126,6 +155,7 @@ namespace YAVD.ConsoleApp.Actions
                 var progress = new Progress<double>(p => DrawProgress(p, current, total));
                 await _ytService.DownloadVideoWithFFmpegAsync(id, savePath, res, progress);
 
+                Console.Write($"\r[{current}/{total}] VİDEO: Ses ve video birleştiriliyor...        ");
                 Console.WriteLine($"\r[{current}/{total}] VİDEO: {fileName} -> TAMAMLANDI. ");
             }
         }
