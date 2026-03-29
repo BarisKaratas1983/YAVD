@@ -41,7 +41,8 @@ namespace YAVD.ConsoleApp.Menus
                 Console.WriteLine("=== Kanal Yönetimi ===");
                 Console.WriteLine("1) Kanal Ekle/Düzenle/Sil");
                 Console.WriteLine("2) Kanal Listesi");
-                Console.WriteLine("3) Kanalların Videolarını Kontrol Et");
+                Console.WriteLine("3) Video Listesi"); // YENİ SEÇENEK
+                Console.WriteLine("4) Kanalların Videolarını Kontrol Et"); // SIRALAMA DEĞİŞTİ
                 Console.WriteLine("0) Ana Menüye Dön");
                 Console.Write("\nSeçiminiz: ");
                 string choice = Console.ReadLine();
@@ -56,7 +57,8 @@ namespace YAVD.ConsoleApp.Menus
                         ChannelActions.WaitForKey();
                     }
                 }
-                else if (choice == "3") await CheckVideosMenu();
+                else if (choice == "3") await ChannelActions.ListVideosAction(); // YENİ METOT
+                else if (choice == "4") await CheckVideosMenu();
                 else if (choice == "0") break;
             }
         }

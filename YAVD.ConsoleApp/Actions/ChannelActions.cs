@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FFMpegCore.Enums;
+using Microsoft.EntityFrameworkCore;
+using System;
 using YAVD.Core.Data;
 using YAVD.Core.Helpers;
 using YAVD.Core.Models;
@@ -13,8 +15,8 @@ namespace YAVD.ConsoleApp.Actions
         {
             Console.WriteLine("\nDevam etmek için bir tuşa basın...");
             Console.ReadKey();
-        }        
-        public static async Task<List<Channel>?> GetChannelsOrWarn(string actionName)
+        }
+        public static async Task<List<Core.Models.Channel>?> GetChannelsOrWarn(string actionName)
         {
             using var db = new YAVDContext();
             var channels = await db.Channels.ToListAsync();
@@ -26,8 +28,8 @@ namespace YAVD.ConsoleApp.Actions
                 return null;
             }
             return channels;
-        }        
-        public static void PrintChannels(List<Channel> channels)
+        }
+        public static void PrintChannels(List<Core.Models.Channel> channels)
         {
             Console.Clear();
             Console.WriteLine("=== Kayıtlı Kanallar ===");
@@ -35,18 +37,18 @@ namespace YAVD.ConsoleApp.Actions
             Console.WriteLine(new string('-', 65));
 
             foreach (var c in channels)
-            {                
+            {
                 string status = c.Active ? "AKTİF" : "PASİF";
                 Console.WriteLine("{0,-5} {1,-30} {2,-10} {3,-20}", c.Id, c.Name, status, c.LastVideoDate);
             }
             Console.WriteLine(new string('-', 65));
-        }        
+        }
         public static async Task AddChannel()
         {
             Console.Clear();
             Console.WriteLine("=== Kanal Ekle ===");
             Console.Write("Kanal veya Video Linki: ");
-            
+
             string url = Console.ReadLine();
             if (string.IsNullOrWhiteSpace(url)) return;
 
@@ -72,7 +74,7 @@ namespace YAVD.ConsoleApp.Actions
             }
             catch (Exception ex) { Console.WriteLine($"\n[HATA] {ex.Message}"); }
             WaitForKey();
-        }        
+        }
         public static async Task DeleteChannel()
         {
             var channels = await GetChannelsOrWarn("Silinecek");
@@ -102,7 +104,7 @@ namespace YAVD.ConsoleApp.Actions
             }
             else Console.WriteLine("\n[HATA] Geçersiz ID.");
             WaitForKey();
-        }        
+        }
         public static async Task ToggleChannelStatus()
         {
             var channels = await GetChannelsOrWarn("Düzenlenecek");
@@ -129,7 +131,7 @@ namespace YAVD.ConsoleApp.Actions
         public static async Task ScanChannelsAction(int? specificChannelId = null)
         {
             using var db = new YAVDContext();
-            
+
             var includeShortsSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "IncludeShorts");
             var actionSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadAction");
             var resSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultVideoResolution");
@@ -140,7 +142,7 @@ namespace YAVD.ConsoleApp.Actions
             bool includeShorts = includeShortsSetting?.Value == "1" || includeShortsSetting?.Value?.ToLower() == "true";
             DownloadAction defaultAction = Enum.TryParse(actionSetting?.Value, out DownloadAction a) ? a : DownloadAction.AudioOnly;
             VideoResolution defaultRes = Enum.TryParse(resSetting?.Value, out VideoResolution r) ? r : VideoResolution.P1080;
-            AudioQuality defaultAudio = Enum.TryParse(audioSetting?.Value, out AudioQuality q) ? q : AudioQuality.Medium;
+            Core.Models.AudioQuality defaultAudio = Enum.TryParse(audioSetting?.Value, out Core.Models.AudioQuality q) ? q : Core.Models.AudioQuality.Medium;
             string downloadFolder = Path.GetFullPath(dirSetting?.Value ?? ".\\Downloads");
 
             Console.Clear();
@@ -152,7 +154,7 @@ namespace YAVD.ConsoleApp.Actions
             Console.WriteLine($"Shorts Dahil  : {(includeShorts ? "Evet" : "Hayır")}");
             Console.WriteLine($"Son Tarama    : {lastCheckedSetting?.Value ?? "Null"}");
             Console.WriteLine(new string('-', 60));
-            
+
             if (!Directory.Exists(downloadFolder))
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -161,7 +163,7 @@ namespace YAVD.ConsoleApp.Actions
                 if (Console.ReadLine()?.ToLower() == "e") Directory.CreateDirectory(downloadFolder);
                 else return;
             }
-            
+
             var query = db.Channels.Where(c => c.Active);
             if (specificChannelId.HasValue) query = query.Where(c => c.Id == specificChannelId.Value);
             var channels = await query.ToListAsync();
@@ -174,20 +176,20 @@ namespace YAVD.ConsoleApp.Actions
                 var newVideos = await _ytService.GetNewVideosFromChannelAsync(channel.YoutubeId, channel.LastVideoDate, includeShorts);
 
                 if (newVideos.Any())
-                {                    
+                {
                     for (int j = 0; j < newVideos.Count; j++)
                     {
                         var v = newVideos[j];
-                        
+
                         var existingVideo = await db.Videos.FirstOrDefaultAsync(x => x.YoutubeId == v.Id);
                         bool shouldDownload = true;
 
                         if (existingVideo != null && existingVideo.IsDownloaded)
-                        {                            
+                        {
                             string checkExt = defaultAction == DownloadAction.AudioOnly ? ".mp3" : ".mp4";
                             string expectedFileName = FileNameHelper.CleanFileName(v.Title) + checkExt; // Basit bir kontrol
                             string checkPath = Path.Combine(downloadFolder, expectedFileName);
-                            
+
                             if (File.Exists(checkPath))
                             {
                                 shouldDownload = false;
@@ -198,7 +200,7 @@ namespace YAVD.ConsoleApp.Actions
                         if (shouldDownload)
                         {
                             try
-                            {                                
+                            {
                                 var videoRecord = existingVideo ?? new Video { YoutubeId = v.Id, ChannelId = channel.Id };
                                 videoRecord.Title = v.Title;
                                 videoRecord.PublishedAt = v.UploadDate;
@@ -206,7 +208,7 @@ namespace YAVD.ConsoleApp.Actions
 
                                 if (existingVideo == null) db.Videos.Add(videoRecord);
                                 await db.SaveChangesAsync();
-                                
+
                                 await DownloadActions.ExecuteDownload(v.Id, v.Title, channel.Name, v.UploadDate, downloadFolder, defaultAction, defaultRes, defaultAudio, j + 1, newVideos.Count);
 
                                 videoRecord.IsDownloaded = true;
@@ -230,6 +232,179 @@ namespace YAVD.ConsoleApp.Actions
             Console.WriteLine(new string('-', 60));
             Console.WriteLine($"[TAMAMLANDI]");
             WaitForKey();
+        }
+        public static void PrintChannelsWithCount(List<(Core.Models.Channel channel, int videoCount)> channelData)
+        {
+            Console.Clear();
+            Console.WriteLine("=== Kanallar ve Video Sayıları ===");
+
+            Console.WriteLine("{0,-5} {1,-30} {2,-15} {3,-12}", "ID", "Kanal Adı", "Son Video", "Video Sayısı");
+
+            Console.WriteLine(new string('-', 70));
+
+            foreach (var item in channelData)
+            {
+                string dateText = item.channel.LastVideoDate?.ToString("yyyy-MM-dd") ?? "Null";
+
+                Console.WriteLine("{0,-5} {1,-30} {2,-15} {3,-12}",
+
+                    item.channel.Id,
+                    item.channel.Name,
+                    dateText,
+                    $"({item.videoCount} Video)");
+            }
+            Console.WriteLine(new string('-', 70));
+        }
+        public static async Task ListVideosAction()
+        {
+            using var db = new YAVDContext();
+
+            if (!await db.Videos.AnyAsync())
+            {
+                Console.WriteLine("\n[UYARI] Henüz veritabanında kayıtlı bir video bulunamadı.");
+
+                WaitForKey();
+                return;
+            }
+
+            while (true)
+            {
+                var channels = await db.Channels.ToListAsync();
+                var channelData = new List<(Core.Models.Channel channel, int videoCount)>();
+
+                foreach (var c in channels)
+                {
+                    int count = await db.Videos.CountAsync(v => v.ChannelId == c.Id);
+                    channelData.Add((c, count));
+                }
+
+                channelData = channelData.OrderByDescending(x => x.channel.LastVideoDate).ToList();
+
+                PrintChannelsWithCount(channelData);
+                Console.Write("\nVideolarını listelemek istediğiniz Kanal ID (0 : Geri): ");
+
+                if (!int.TryParse(Console.ReadLine(), out int channelId) || channelId == 0) break;
+
+                var selectedChannel = channels.FirstOrDefault(c => c.Id == channelId);
+                if (selectedChannel == null)
+                {
+                    Console.WriteLine("[HATA] Geçersiz Kanal ID.");
+
+                    WaitForKey();
+                    continue;
+                }
+
+                var videos = await db.Videos
+                    .Where(v => v.ChannelId == channelId)
+                    .OrderByDescending(v => v.PublishedAt)
+                    .ToListAsync();
+
+                if (!videos.Any())
+                {
+                    Console.WriteLine($"\n[BİLGİ] {selectedChannel.Name} kanalına ait henüz video kaydı yok.");
+
+
+                    WaitForKey();
+                    continue;
+                }
+
+                await ShowVideoSubMenu(selectedChannel, videos);
+            }
+        }
+        private static async Task ShowVideoSubMenu(Core.Models.Channel channel, List<Video> videos)
+        {
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine($"=== {channel.Name} - Video Listesi ===");
+
+
+                Console.WriteLine("{0,-5} {1,-40} {2,-15} {3,-12}", "ID", "Video Başlığı", "Tarih", "Durum");
+
+
+                Console.WriteLine(new string('-', 80));
+
+                foreach (var v in videos)
+                {
+                    string status = v.IsDownloaded ? "[İNDİRİLDİ]" : "[BEKLEMEDE]";
+                    string title = v.Title.Length > 37 ? v.Title.Substring(0, 37) + "..." : v.Title;
+                    Console.WriteLine("{0,-5} {1,-40} {2,-15} {3,-12}", v.Id, title, v.PublishedAt.ToString("yyyy-MM-dd"), status);
+                }
+
+                Console.Write("\nİşlem yapmak istediğiniz Video ID (0 : Geri): ");
+                if (!int.TryParse(Console.ReadLine(), out int videoId) || videoId == 0) break;
+
+                var video = videos.FirstOrDefault(v => v.Id == videoId);
+                if (video == null)
+                {
+                    Console.WriteLine("[HATA] Geçersiz Video ID."); WaitForKey(); continue;
+                }
+
+                Console.WriteLine($"\nSeçili Video: {video.Title}");
+                Console.WriteLine("1) Yeniden İndir (Mevcut Ayarlar ile)");
+                Console.WriteLine("2) Kaydı Veritabanından Sil");
+                Console.WriteLine("0) Geri");
+                Console.Write("\nSeçiminiz: ");
+
+                string act = Console.ReadLine();
+
+                if (act == "1")
+                {
+                    await RedownloadVideo(channel, video);
+                }
+                else if (act == "2")
+                {
+                    await DeleteVideoRecord(video);
+                    videos.Remove(video); // Listeyi güncelle
+                    if (!videos.Any()) break;
+                }
+                else if (act == "0") break;
+            }
+        }
+        private static async Task RedownloadVideo(Core.Models.Channel channel, Video video)
+        {
+            using var db = new YAVDContext();
+
+            var dirSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadDirectory");
+            var actionSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadAction");
+            var resSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultVideoResolution");
+            var audioSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultAudioQuality");
+
+            string folder = Path.GetFullPath(dirSetting?.Value ?? ".\\Downloads");
+
+            DownloadAction action = Enum.TryParse(actionSetting?.Value, out DownloadAction a) ? a : DownloadAction.AudioOnly;
+            VideoResolution res = Enum.TryParse(resSetting?.Value, out VideoResolution r) ? r : VideoResolution.P1080;
+            Core.Models.AudioQuality audio = Enum.TryParse(audioSetting?.Value, out Core.Models.AudioQuality q) ? q : Core.Models.AudioQuality.Medium;
+
+            Console.WriteLine("\n[BİLGİ] İndirme işlemi başlatılıyor...");
+            try
+            {
+                await DownloadActions.ExecuteDownload(video.YoutubeId, video.Title, channel.Name, video.PublishedAt, folder, action, res, audio, 1, 1);
+
+                video.IsDownloaded = true;
+                db.Videos.Update(video);
+                await db.SaveChangesAsync();
+                Console.WriteLine("\n[BAŞARILI] Video yeniden indirildi.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\n[HATA] {ex.Message}");
+            }
+
+            WaitForKey();
+        }
+        private static async Task DeleteVideoRecord(Video video)
+        {
+            Console.Write($"\n'{video.Title}' kaydını silmek istediğinize emin misiniz? (E/H): ");
+            if (Console.ReadLine()?.ToLower() == "e")
+            {
+                using var db = new YAVDContext();
+                db.Videos.Remove(video);
+                await db.SaveChangesAsync();
+                Console.WriteLine("[BAŞARILI] Video kaydı veritabanından silindi.");
+
+                WaitForKey();
+            }
         }
     }
 }
