@@ -1,4 +1,5 @@
 ﻿using YAVD.ConsoleApp.Actions;
+using YAVD.ConsoleApp.Helpers;
 using YAVD.ConsoleApp.Menus;
 using YAVD.Core.Helpers;
 
@@ -8,7 +9,7 @@ if (!dbCheck.IsSuccess)
     Console.ForegroundColor = ConsoleColor.Red;
     Console.WriteLine(dbCheck.Message);
     Console.ResetColor();
-    ChannelActions.WaitForKey();
+    ConsoleHelper.WaitForKey();
     return;
 }
 
@@ -18,7 +19,7 @@ if (!ffmpegCheck.IsSuccess)
     Console.ForegroundColor = ConsoleColor.Yellow;
     Console.WriteLine(ffmpegCheck.Message);
     Console.ResetColor();
-    ChannelActions.WaitForKey();
+    ConsoleHelper.WaitForKey();
     return;
 }
 

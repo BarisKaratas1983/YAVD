@@ -1,8 +1,9 @@
-﻿using YAVD.Core.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using YAVD.ConsoleApp.Helpers;
+using YAVD.Core.Data;
+using YAVD.Core.Helpers;
 using YAVD.Core.Models;
 using YAVD.Core.Services;
-using YAVD.Core.Helpers;
-using Microsoft.EntityFrameworkCore;
 
 namespace YAVD.ConsoleApp.Actions
 {
@@ -31,7 +32,7 @@ namespace YAVD.ConsoleApp.Actions
                     if (!createResult.IsSuccess)
                     {
                         Console.WriteLine($"\n[HATA] Klasör oluşturulamadı: {createResult.Message}");
-                        ChannelActions.WaitForKey();
+                        ConsoleHelper.WaitForKey();
                         return;
                     }
                     Console.WriteLine("[BAŞARILI] Klasör oluşturuldu.");
@@ -39,7 +40,7 @@ namespace YAVD.ConsoleApp.Actions
                 else
                 {
                     Console.WriteLine("\n[İPTAL] Klasör mevcut olmadığı için işleme devam edilemiyor.");
-                    ChannelActions.WaitForKey();
+                    ConsoleHelper.WaitForKey();
                     return;
                 }
             }
@@ -89,12 +90,12 @@ namespace YAVD.ConsoleApp.Actions
 
                 Console.WriteLine("\n\n[TAMAMLANDI] Tüm indirme işlemleri başarıyla bitti.");
                 Console.WriteLine($"Dosyalar şurada: {finalPath}");
-                ChannelActions.WaitForKey();
+                ConsoleHelper.WaitForKey();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"\n[HATA] Bir sorun oluştu: {ex.Message}");
-                ChannelActions.WaitForKey();
+                ConsoleHelper.WaitForKey();
             }
         }
         private static async Task StartSingleVideoDownload(string url, string folder, DownloadAction action, VideoResolution res, AudioQuality audio)

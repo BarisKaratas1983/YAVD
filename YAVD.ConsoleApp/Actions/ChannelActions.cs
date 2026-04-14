@@ -43,6 +43,7 @@ namespace YAVD.ConsoleApp.Actions
             using var db = new YAVDContext();
 
             var includeShortsSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "IncludeShorts");
+            var includeLiveSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "IncludeLiveStreams");
             var actionSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultDownloadAction");
             var resSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultVideoResolution");
             var audioSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "DefaultAudioQuality");
@@ -50,9 +51,11 @@ namespace YAVD.ConsoleApp.Actions
             var lastCheckedSetting = await db.AppSettings.FirstOrDefaultAsync(s => s.Key == "LastCheckedDate");
 
             bool includeShorts = includeShortsSetting?.Value == "1" || includeShortsSetting?.Value?.ToLower() == "true";
+            bool includeLive = includeLiveSetting?.Value == "1" || includeLiveSetting?.Value?.ToLower() == "true";
+
             DownloadAction defaultAction = Enum.TryParse(actionSetting?.Value, out DownloadAction a) ? a : DownloadAction.AudioOnly;
             VideoResolution defaultRes = Enum.TryParse(resSetting?.Value, out VideoResolution r) ? r : VideoResolution.P1080;
-            Core.Models.AudioQuality defaultAudio = Enum.TryParse(audioSetting?.Value, out Core.Models.AudioQuality q) ? q : Core.Models.AudioQuality.Medium;
+            AudioQuality defaultAudio = Enum.TryParse(audioSetting?.Value, out AudioQuality q) ? q : AudioQuality.Medium;
             string downloadFolder = Path.GetFullPath(dirSetting?.Value ?? ".\\Downloads");
 
             Console.Clear();
@@ -83,7 +86,7 @@ namespace YAVD.ConsoleApp.Actions
             foreach (var channel in channels)
             {
                 Console.WriteLine($"\r[*] {channel.Name} taranıyor...");
-                var newVideos = await _ytService.GetNewVideosFromChannelAsync(channel.YoutubeId, channel.LastVideoDate, includeShorts);
+                var newVideos = await _ytService.GetNewVideosFromChannelAsync(channel.YoutubeId, channel.LastVideoDate, includeShorts, includeLive);
 
                 if (newVideos.Any())
                 {
